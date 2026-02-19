@@ -87,6 +87,16 @@
 .sidebar-footer {
   padding: 1rem 1.25rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sidebar-link-logout {
+  color: rgba(255, 255, 255, 0.6);
+}
+.sidebar-link-logout:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
 }
 .sidebar-footer-text {
   font-size: 0.75rem;

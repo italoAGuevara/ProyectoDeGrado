@@ -53,6 +53,15 @@
       </a>
       <a
         class="sidebar-link"
+        routerLink="/reportes"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+      >
+        <span class="sidebar-link-icon">▤</span>
+        Reportes
+      </a>
+      <a
+        class="sidebar-link"
         routerLink="/configuracion"
         routerLinkActive="active"
         (click)="closeSidebar()"
@@ -62,6 +71,14 @@
       </a>
     </nav>
     <div class="sidebar-footer">
+      <a
+        class="sidebar-link sidebar-link-logout"
+        routerLink="/login"
+        (click)="closeSidebar()"
+      >
+        <span class="sidebar-link-icon">⎋</span>
+        Cerrar sesión
+      </a>
       <span class="sidebar-footer-text">S3 · Google Drive</span>
     </div>
   </aside>

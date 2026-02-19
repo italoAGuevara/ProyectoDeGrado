@@ -1,0 +1,13 @@
+.report-breadcrumb {
+  font-size: 0.875rem;
+}
+.report-breadcrumb .breadcrumb-item a {
+  color: var(--accent, #6366f1);
+  text-decoration: none;
+}
+.report-breadcrumb .breadcrumb-item a:hover {
+  text-decoration: underline;
+}
+.report-breadcrumb .breadcrumb-item.active span {
+  color: var(--text-muted, #6b7280);
+}
