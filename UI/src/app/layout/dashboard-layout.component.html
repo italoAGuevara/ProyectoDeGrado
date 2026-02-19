@@ -1,0 +1,78 @@
+<div class="app-layout">
+  <!-- Overlay móvil -->
+  <div
+    class="sidebar-overlay"
+    [class.is-open]="sidebarOpen()"
+    (click)="closeSidebar()"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Sidebar izquierda -->
+  <aside class="sidebar" [class.is-open]="sidebarOpen()">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-icon">◇</span>
+      <span class="sidebar-brand-text">Copia a la nube</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a
+        class="sidebar-link"
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeSidebar()"
+      >
+        <span class="sidebar-link-icon">⌂</span>
+        Inicio
+      </a>
+      <a
+        class="sidebar-link"
+        routerLink="/trabajos"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+      >
+        <span class="sidebar-link-icon">◷</span>
+        Trabajos
+      </a>
+      <a
+        class="sidebar-link"
+        routerLink="/destinos"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+      >
+        <span class="sidebar-link-icon">▣</span>
+        Destinos
+      </a>
+      <a
+        class="sidebar-link"
+        routerLink="/scripts"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+      >
+        <span class="sidebar-link-icon">⎔</span>
+        Scripts
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="sidebar-footer-text">S3 · Google Drive</span>
+    </div>
+  </aside>
+
+  <!-- Área principal -->
+  <div class="main-wrap">
+    <header class="main-header">
+      <button
+        type="button"
+        class="menu-toggle"
+        (click)="toggleSidebar()"
+        aria-label="Abrir menú"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </header>
+    <main class="main-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

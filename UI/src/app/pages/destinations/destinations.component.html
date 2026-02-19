@@ -1,0 +1,98 @@
+<div class="container-fluid px-0">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title">Destinos</h1>
+    <button type="button" class="btn btn-primary btn-modern" (click)="openCreate()">
+      + Nuevo destino
+    </button>
+  </div>
+
+  <div class="row g-4">
+    @for (d of destinations(); track d.id) {
+      <div class="col-md-6 col-lg-4">
+        <div class="app-card card h-100 border-0">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h5 class="card-title mb-0 fw-600">{{ d.name }}</h5>
+              <span class="badge" [ngClass]="typeBadgeClass(d.type)">{{ typeLabel(d.type) }}</span>
+            </div>
+            @if (d.type === 's3') {
+              <p class="card-text small text-muted mb-1">
+                Bucket: <code class="bg-light px-2 py-1 rounded">{{ d.config['bucket'] }}</code>
+              </p>
+              <p class="card-text small text-muted mb-3">
+                Región: <code class="bg-light px-2 py-1 rounded">{{ d.config['region'] }}</code>
+              </p>
+            } @else {
+              <p class="card-text small text-muted mb-3">
+                Folder ID: <code class="bg-light px-2 py-1 rounded">{{ d.config['folderId'] }}</code>
+              </p>
+            }
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-sm btn-outline-primary btn-modern btn-icon" (click)="openEdit(d)" aria-label="Editar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5v.5a.5.5 0 0 1 .5.5v.5h.5V10h.207l6.5-6.5zm-3.5 2.5L2 12.293V13h.707l6.5-6.5H9.5v-.5H9v-.5H8.5V5H8v-.5H7.5V4h-.293L2 9.293v.586l3-3z"/></svg>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger btn-modern btn-icon" (click)="deleteDest(d)" aria-label="Eliminar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="col-12">
+        <div class="app-card card border-0">
+          <div class="card-body p-4 text-center text-muted">
+            No hay destinos configurados. Añade uno (Amazon S3 o Google Drive) con "Nuevo destino".
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-600">{{ modalTitle }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal()" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-500">Nombre del destino</label>
+            <input type="text" class="form-control" [(ngModel)]="formName" placeholder="Ej: S3 principal" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-500">Tipo</label>
+            <select class="form-select" [(ngModel)]="formType">
+              <option value="s3">Amazon S3</option>
+              <option value="google_drive">Google Drive</option>
+            </select>
+          </div>
+
+          @if (formType === 's3') {
+            <div class="mb-3">
+              <label class="form-label fw-500">Bucket</label>
+              <input type="text" class="form-control" [(ngModel)]="formBucket" placeholder="nombre-del-bucket" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-500">Región</label>
+              <input type="text" class="form-control" [(ngModel)]="formRegion" placeholder="us-east-1" />
+            </div>
+          } @else {
+            <div class="mb-3">
+              <label class="form-label fw-500">ID de carpeta (Google Drive)</label>
+              <input type="text" class="form-control" [(ngModel)]="formFolderId" placeholder="ID de la carpeta" />
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-modern" (click)="closeModal()">Cancelar</button>
+          <button type="button" class="btn btn-primary btn-modern" (click)="save()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

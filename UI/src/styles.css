@@ -1,0 +1,139 @@
+/* Bootstrap */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Tema moderno */
+:root {
+  --app-bg: #f0f2f5;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --card-bg: #fff;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 10px 40px -10px rgba(0, 0, 0, 0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --text-primary: #111827;
+  --text-muted: #6b7280;
+  --border: rgba(0, 0, 0, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text-primary);
+  background: var(--app-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Cards modernas */
+.app-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.app-card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Botones */
+.btn-modern {
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+.btn-modern:active {
+  transform: scale(0.98);
+}
+.btn-icon {
+  padding: 0.4rem 0.5rem !important;
+  line-height: 1;
+}
+.btn-icon svg {
+  display: block;
+  margin: 0 auto;
+}
+.btn-primary {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  border-radius: var(--radius-sm) !important;
+}
+.btn-primary:hover {
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+/* Inputs y formularios */
+.form-control,
+.form-select {
+  border-radius: var(--radius-sm) !important;
+  border-color: var(--border) !important;
+  padding: 0.5rem 0.75rem !important;
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Modales */
+.modal-content {
+  border-radius: var(--radius) !important;
+  border: none !important;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.2) !important;
+}
+.modal-header {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 1rem 1.25rem !important;
+}
+.modal-body {
+  padding: 1.25rem !important;
+}
+.modal-footer {
+  border-top: 1px solid var(--border) !important;
+  padding: 1rem 1.25rem !important;
+}
+
+/* Tablas */
+.table-modern {
+  --bs-table-hover-bg: rgba(99, 102, 241, 0.04) !important;
+}
+.table-modern thead th {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border) !important;
+  padding: 0.875rem 1rem !important;
+}
+.table-modern tbody td {
+  padding: 0.875rem 1rem !important;
+  vertical-align: middle !important;
+}
+.table-modern tbody tr {
+  transition: background 0.1s ease;
+}
+
+/* Badges */
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+/* Títulos de página */
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 0;
+}
+
+.fw-500 { font-weight: 500; }
+.fw-600 { font-weight: 600; }

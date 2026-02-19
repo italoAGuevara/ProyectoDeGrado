@@ -1,0 +1,185 @@
+<div class="container-fluid px-0">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="page-title">Scripts pre / post copiado</h1>
+      <p class="text-muted small mb-0 mt-1">
+        Configura scripts que se ejecutan antes (pre) o después (post) del proceso de copiado.
+      </p>
+    </div>
+    <button type="button" class="btn btn-primary btn-modern" (click)="openCreate()">
+      + Nuevo script
+    </button>
+  </div>
+
+  <div class="app-card card border-0 overflow-hidden">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-modern table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Cuándo</th>
+              <th>Tipo</th>
+              <th>Ruta del script</th>
+              <th>Argumentos</th>
+              <th>Orden</th>
+              <th>Estado</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (script of scripts(); track script.id) {
+              <tr>
+                <td class="fw-500">{{ script.name }}</td>
+                <td>
+                  <span class="badge" [ngClass]="whenBadgeClass(script.when)">
+                    {{ whenLabel(script.when) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="scriptTypeBadgeClass(script.scriptType)">
+                    {{ scriptTypeLabel(script.scriptType) }}
+                  </span>
+                </td>
+                <td><code class="small bg-light px-2 py-1 rounded">{{ script.scriptPath }}</code></td>
+                <td>
+                  @if (script.arguments) {
+                    <code class="small bg-light px-2 py-1 rounded text-break">{{ script.arguments }}</code>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td>{{ script.order }}</td>
+                <td>
+                  @if (script.enabled) {
+                    <span class="badge bg-success">Activo</span>
+                  } @else {
+                    <span class="badge bg-secondary">Desactivado</span>
+                  }
+                </td>
+                <td class="text-end">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary me-1 btn-modern btn-icon"
+                    (click)="openEdit(script)"
+                    aria-label="Editar"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5v.5a.5.5 0 0 1 .5.5v.5h.5V10h.207l6.5-6.5zm-3.5 2.5L2 12.293V13h.707l6.5-6.5H9.5v-.5H9v-.5H8.5V5H8v-.5H7.5V4h-.293L2 9.293v.586l3-3z"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger btn-modern btn-icon"
+                    (click)="deleteScript(script)"
+                    aria-label="Eliminar"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="text-center text-muted py-5">
+                  No hay scripts configurados. Añade uno con "Nuevo script".
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-card card border-0 mt-4">
+    <div class="card-body p-4">
+      <h6 class="fw-600 mb-2">Cómo funcionan</h6>
+      <ul class="text-muted small mb-0">
+        <li><strong>Pre-copiado:</strong> se ejecutan antes de iniciar la copia (ej: comprimir, validar).</li>
+        <li><strong>Post-copiado:</strong> se ejecutan después de terminar la copia (ej: notificar, limpiar).</li>
+        <li>El <strong>orden</strong> define la secuencia cuando hay varios del mismo tipo (menor = primero).</li>
+        <li>Solo se permiten scripts <strong>.ps1</strong> (PowerShell), <strong>.bat</strong> (Batch) y <strong>.js</strong> (Node.js).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-600">{{ modalTitle }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal()" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-500">Nombre</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="formName"
+              placeholder="Ej: Preparar carpetas"
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-500">Cuándo ejecutar</label>
+            <select class="form-select" [(ngModel)]="formWhen">
+              <option value="pre">Pre-copiado (antes de copiar)</option>
+              <option value="post">Post-copiado (después de copiar)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-500">Tipo de script</label>
+            <select class="form-select" [(ngModel)]="formScriptType">
+              @for (opt of allowedTypes; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-500">Ruta del script</label>
+            <input
+              type="text"
+              class="form-control"
+              [class.is-invalid]="formPathError()"
+              [(ngModel)]="formScriptPath"
+              [placeholder]="formScriptType === 'ps1' ? 'C:\\Scripts\\mi-script.ps1' : formScriptType === 'bat' ? 'C:\\Scripts\\mi-script.bat' : 'C:\\Scripts\\mi-script.js'"
+            />
+            @if (formPathError()) {
+              <div class="invalid-feedback d-block">{{ formPathError() }}</div>
+            }
+            <div class="form-text">Solo archivos .ps1, .bat o .js. La ruta debe terminar en .{{ formScriptType }}</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-500">Argumentos (opcional)</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="formArguments"
+              placeholder="Ej: -NoProfile, argumento1"
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-500">Orden</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="formOrder"
+              min="1"
+              placeholder="1"
+            />
+            <div class="form-text">Menor número = se ejecuta primero.</div>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="scriptEnabled" [(ngModel)]="formEnabled" />
+            <label class="form-check-label" for="scriptEnabled">Script activo</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-modern" (click)="closeModal()">Cancelar</button>
+          <button type="button" class="btn btn-primary btn-modern" (click)="save()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

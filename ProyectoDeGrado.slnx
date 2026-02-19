@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="API/API.csproj" />
+  <Project Path="HostedService/HostedService.csproj" Id="bc5a8d43-74a0-49f0-adc9-7ef46d27225a" />
+</Solution>

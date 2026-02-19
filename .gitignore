@@ -1,0 +1,65 @@
+# ==========================================
+# .NET / Visual Studio
+# ==========================================
+bin/
+obj/
+out/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+
+# Archivos específicos de VS
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# Bases de datos locales
+*.mdf
+*.ldf
+*.sdf
+
+# ==========================================
+# Angular (Carpeta /UI)
+# ==========================================
+# Salidas de compilación
+/UI/dist/
+/UI/tmp/
+/UI/out-tsc/
+/UI/bazel-out/
+/UI/.angular/cache/
+
+# Dependencias
+/UI/node_modules/
+
+# Logs y depuración
+/UI/npm-debug.log*
+/UI/yarn-error.log*
+/UI/yarn-debug.log*
+/UI/pnpm-debug.log*
+
+# Cobertura de tests
+/UI/coverage/
+/UI/testem.log
+
+# ==========================================
+# IDEs y Editores (Global)
+# ==========================================
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+
+# ==========================================
+# Sistema
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
