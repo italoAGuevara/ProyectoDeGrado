@@ -8,7 +8,6 @@ export type ScriptType = 'ps1' | 'bat' | 'js';
 export interface CopyScript {
     id: string;
     name: string;
-    when: ScriptWhen;
     /** Tipo de script permitido: .ps1, .bat o .js */
     scriptType: ScriptType;
     /** Ruta al archivo del script (debe coincidir con la extensión de scriptType) */
@@ -27,7 +26,6 @@ export class ScriptsService {
         {
             id: '1',
             name: 'Preparar carpetas',
-            when: 'pre',
             scriptType: 'ps1',
             scriptPath: 'C:\\Scripts\\pre-backup.ps1',
             arguments: '',
@@ -37,7 +35,6 @@ export class ScriptsService {
         {
             id: '2',
             name: 'Notificar fin',
-            when: 'post',
             scriptType: 'js',
             scriptPath: 'C:\\Scripts\\notify.js',
             arguments: '',

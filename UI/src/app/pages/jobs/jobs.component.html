@@ -29,10 +29,17 @@
                 <td>{{ job.destinationName }}</td>
                 <td><span class="badge bg-light text-dark">{{ scheduleLabel(job.schedule) }}</span></td>
                 <td>
-                  @for (s of getJobScriptNames(job); track $index) {
-                    <span class="badge bg-secondary me-1">{{ s }}</span>
+                  @for (s of getJobScripts(job); track $index) {
+                    <div class="mb-1">
+                      <span 
+                        class="badge me-1"
+                        [class.bg-primary]="s.when === 'pre'"
+                        [class.bg-info]="s.when === 'post'"
+                      >{{ s.when === 'pre' ? 'PRE' : 'POST' }}</span>
+                      <span class="small">{{ s.name }}</span>
+                    </div>
                   }
-                  @if (getJobScriptNames(job).length === 0) {
+                  @if (getJobScripts(job).length === 0) {
                     <span class="text-muted small">-</span>
                   }
                 </td>
@@ -80,136 +87,4 @@
   </div>
 </div>
 
-<!-- Modal -->
-@if (showModal()) {
-  <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title fw-600">{{ modalTitle }}</h5>
-          <button type="button" class="btn-close" (click)="closeModal()" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label fw-500">Nombre del trabajo</label>
-            <input type="text" class="form-control" [(ngModel)]="formName" placeholder="Ej: Backup diario" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-500">Ruta origen</label>
-            <input type="text" class="form-control" [(ngModel)]="formSourcePath" placeholder="C:\Carpeta o /ruta" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-500">Destino</label>
-            <select class="form-select" [(ngModel)]="formDestination">
-              <option value="S3 principal">S3 principal</option>
-              <option value="Google Drive backup">Google Drive backup</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-500">Programación</label>
-            <div class="mb-2">
-              <select class="form-select" [(ngModel)]="formScheduleType">
-                <option value="daily">Diario</option>
-                <option value="weekly">Semanal (elegir días)</option>
-                <option value="monthly">Mensual (elegir día del mes)</option>
-              </select>
-            </div>
-            @if (formScheduleType === 'weekly') {
-              <div class="mb-2">
-                <span class="form-label d-block small text-muted mb-1">Días de la semana</span>
-                <div class="d-flex gap-2 flex-wrap">
-                  @for (w of weekdayOptions; track w.value) {
-                    <button
-                      type="button"
-                      class="btn btn-sm"
-                      [class.btn-primary]="isWeekdaySelected(w.value)"
-                      [class.btn-outline-secondary]="!isWeekdaySelected(w.value)"
-                      (click)="toggleWeekday(w.value)"
-                    >
-                      {{ w.label }}
-                    </button>
-                  }
-                </div>
-                <div class="form-text small">D=Dom, L=Lun, M=Mar, X=Mié, J=Jue, V=Vie, S=Sáb</div>
-              </div>
-            }
-            @if (formScheduleType === 'monthly') {
-              <div class="mb-2">
-                <label class="form-label small text-muted mb-1">Día del mes</label>
-                <select class="form-select" [(ngModel)]="formScheduleDayOfMonth">
-                  @for (d of daysOfMonth; track d) {
-                    <option [value]="d">{{ d }}</option>
-                  }
-                </select>
-              </div>
-            }
-            <div class="row g-2">
-              <div class="col-6">
-                <label class="form-label small text-muted mb-1">Hora</label>
-                <select class="form-select" [(ngModel)]="formScheduleHour">
-                  @for (h of hours; track h) {
-                    <option [value]="h">{{ pad2(h) }}:00</option>
-                  }
-                </select>
-              </div>
-              <div class="col-6">
-                <label class="form-label small text-muted mb-1">Minuto</label>
-                <select class="form-select" [(ngModel)]="formScheduleMinute">
-                  @for (m of minutes; track m) {
-                    <option [value]="m">{{ pad2(m) }}</option>
-                  }
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-500">Scripts</label>
-            @if (availableScripts().length > 0) {
-              <div class="list-group">
-                @for (script of availableScripts(); track script.id) {
-                  <label class="list-group-item d-flex gap-2 align-items-center" style="cursor: pointer;">
-                    <input
-                      class="form-check-input flex-shrink-0"
-                      type="checkbox"
-                      [checked]="isScriptSelected(script.id)"
-                      (change)="toggleScript(script.id)"
-                    />
-                    <div class="d-flex flex-column small w-100">
-                      <div class="d-flex justify-content-between">
-                        <span class="fw-500">{{ script.name }}</span>
-                        <span
-                          class="badge"
-                          [class.bg-primary]="script.scriptType === 'ps1'"
-                          [class.bg-dark]="script.scriptType === 'bat'"
-                          [class.bg-success]="script.scriptType === 'js'"
-                        >
-                          {{ script.scriptType }}
-                        </span>
-                      </div>
-                      <span class="text-muted" style="font-size: 0.8rem;">
-                        {{ script.scriptPath }}
-                      </span>
-                    </div>
-                  </label>
-                }
-              </div>
-            } @else {
-              <div class="text-muted small border rounded p-2 bg-light">
-                No hay scripts disponibles.
-              </div>
-            }
-          </div>
 
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="jobEnabled" [(ngModel)]="formEnabled" />
-            <label class="form-check-label" for="jobEnabled">Trabajo activo</label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-modern" (click)="closeModal()">Cancelar</button>
-          <button type="button" class="btn btn-primary btn-modern" (click)="save()">Guardar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-}

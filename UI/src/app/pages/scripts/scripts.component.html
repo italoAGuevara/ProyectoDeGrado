@@ -32,11 +32,6 @@
               <tr>
                 <td class="fw-500">{{ script.name }}</td>
                 <td>
-                  <span class="badge" [ngClass]="whenBadgeClass(script.when)">
-                    {{ whenLabel(script.when) }}
-                  </span>
-                </td>
-                <td>
                   <span class="badge" [ngClass]="scriptTypeBadgeClass(script.scriptType)">
                     {{ scriptTypeLabel(script.scriptType) }}
                   </span>
@@ -121,13 +116,7 @@
               placeholder="Ej: Preparar carpetas"
             />
           </div>
-          <div class="mb-3">
-            <label class="form-label fw-500">Cuándo ejecutar</label>
-            <select class="form-select" [(ngModel)]="formWhen">
-              <option value="pre">Pre-copiado (antes de copiar)</option>
-              <option value="post">Post-copiado (después de copiar)</option>
-            </select>
-          </div>
+         
           <div class="mb-3">
             <label class="form-label fw-500">Tipo de script</label>
             <select class="form-select" [(ngModel)]="formScriptType">
@@ -158,18 +147,7 @@
               [(ngModel)]="formArguments"
               placeholder="Ej: -NoProfile, argumento1"
             />
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-500">Orden</label>
-            <input
-              type="number"
-              class="form-control"
-              [(ngModel)]="formOrder"
-              min="1"
-              placeholder="1"
-            />
-            <div class="form-text">Menor número = se ejecuta primero.</div>
-          </div>
+          </div>          
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="scriptEnabled" [(ngModel)]="formEnabled" />
             <label class="form-check-label" for="scriptEnabled">Script activo</label>

@@ -47,7 +47,6 @@ export class ScriptsComponent {
   openEdit(script: CopyScript): void {
     this.editingScript.set(script);
     this.formName = script.name;
-    this.formWhen = script.when;
     this.formScriptType = script.scriptType;
     this.formScriptPath = script.scriptPath;
     this.formArguments = script.arguments;
@@ -78,7 +77,6 @@ export class ScriptsComponent {
     const script: CopyScript = {
       id: edit?.id ?? String(Date.now()),
       name: this.formName,
-      when: this.formWhen,
       scriptType: this.formScriptType,
       scriptPath: this.formScriptPath.trim(),
       arguments: this.formArguments,

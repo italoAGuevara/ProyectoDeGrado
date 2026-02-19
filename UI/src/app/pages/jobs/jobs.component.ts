@@ -1,17 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CopyScript, ScriptsService } from '../../services/scripts.service';
+import { Router } from '@angular/router';
+import { ScriptsService } from '../../services/scripts.service';
 import { ToastService } from '../../services/toast.service';
-
-interface Job {
-  id: string;
-  name: string;
-  sourcePath: string;
-  destinationName: string;
-  schedule: string;
-  enabled: boolean;
-  scripts: string[]; // IDs de scripts seleccionados
-}
+import { JobsService, Job } from '../../services/jobs.service';
 
 /** Cron: minuto hora díaMes mes díaSemana (0=domingo, 6=sábado) */
 const WEEKDAY_LABELS: { value: number; label: string }[] = [
@@ -31,8 +23,10 @@ const WEEKDAY_LABELS: { value: number; label: string }[] = [
   templateUrl: './jobs.component.html',
 })
 export class JobsComponent {
+  private router = inject(Router);
   private scriptsService = inject(ScriptsService);
   private toastService = inject(ToastService);
+  private jobsService = inject(JobsService);
 
   readonly weekdayOptions = WEEKDAY_LABELS;
   readonly hours = Array.from({ length: 24 }, (_, i) => i);
@@ -56,185 +50,20 @@ export class JobsComponent {
 
   availableScripts = this.scriptsService.scripts;
 
-  jobs = signal<Job[]>([
-    {
-      id: '1',
-      name: 'Backup diario documentos',
-      sourcePath: 'C:\\Docs',
-      destinationName: 'S3 principal',
-      schedule: '0 2 * * *',
-      enabled: true,
-      scripts: ['1'],
-    },
-  ]);
-
-  showModal = signal(false);
-  editingJob = signal<Job | null>(null);
-  formName = '';
-  formSourcePath = '';
-  formDestination = '';
-  /** 'daily' | 'weekly' | 'monthly' */
-  formScheduleType: 'daily' | 'weekly' | 'monthly' = 'daily';
-  formScheduleHour = 2;
-  formScheduleMinute = 0;
-  /** Días de la semana seleccionados (0=dom ... 6=sáb) */
-  formScheduleWeekdays: number[] = [1];
-  /** Día del mes (1-31) para mensual */
-  formScheduleDayOfMonth = 1;
-  formEnabled = true;
-
-  /** IDs de scripts seleccionados en el formulario */
-  formScripts: string[] = [];
-
-  get formSchedule(): string {
-    const m = this.formScheduleMinute;
-    const h = this.formScheduleHour;
-    if (this.formScheduleType === 'daily') {
-      return `${m} ${h} * * *`;
-    }
-    if (this.formScheduleType === 'weekly') {
-      const days = this.formScheduleWeekdays.length ? this.formScheduleWeekdays.sort((a, b) => a - b).join(',') : '0';
-      return `${m} ${h} * * ${days}`;
-    }
-    const d = this.formScheduleDayOfMonth;
-    return `${m} ${h} ${d} * *`;
-  }
+  jobs = this.jobsService.jobs;
 
   openCreate(): void {
-    this.editingJob.set(null);
-    this.formName = '';
-    this.formSourcePath = '';
-    this.formDestination = '';
-    this.formScheduleType = 'daily';
-    this.formScheduleHour = 2;
-    this.formScheduleMinute = 0;
-    this.formScheduleWeekdays = [1];
-    this.formScheduleDayOfMonth = 1;
-    this.formEnabled = true;
-    this.formScripts = [];
-    this.showModal.set(true);
+    this.router.navigate(['/trabajos/nuevo']);
   }
 
   openEdit(job: Job): void {
-    this.editingJob.set(job);
-    this.formName = job.name;
-    this.formSourcePath = job.sourcePath;
-    this.formDestination = job.destinationName;
-    this.formEnabled = job.enabled;
-    this.formScripts = [...(job.scripts || [])];
-    this.parseCronToForm(job.schedule);
-    this.showModal.set(true);
-  }
-
-  /** Rellena los campos de programación a partir de una expresión cron */
-  private parseCronToForm(cron: string): void {
-    const parts = cron.trim().split(/\s+/);
-    if (parts.length < 5) {
-      this.formScheduleType = 'daily';
-      this.formScheduleHour = 0;
-      this.formScheduleMinute = 0;
-      this.formScheduleWeekdays = [1];
-      this.formScheduleDayOfMonth = 1;
-      return;
-    }
-    const [min, hour, dayMonth, , dayWeek] = parts;
-    this.formScheduleMinute = parseInt(min, 10) || 0;
-    this.formScheduleHour = parseInt(hour, 10) || 0;
-
-    if (dayMonth !== '*' && dayWeek === '*') {
-      this.formScheduleType = 'monthly';
-      this.formScheduleDayOfMonth = Math.min(31, Math.max(1, parseInt(dayMonth, 10) || 1));
-      this.formScheduleWeekdays = [1];
-      return;
-    }
-    if (dayWeek !== '*') {
-      this.formScheduleType = 'weekly';
-      this.formScheduleWeekdays = dayWeek.split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n) && n >= 0 && n <= 6);
-      if (this.formScheduleWeekdays.length === 0) this.formScheduleWeekdays = [1];
-      this.formScheduleDayOfMonth = 1;
-      return;
-    }
-    this.formScheduleType = 'daily';
-    this.formScheduleWeekdays = [1];
-    this.formScheduleDayOfMonth = 1;
-  }
-
-  toggleWeekday(day: number): void {
-    const i = this.formScheduleWeekdays.indexOf(day);
-    if (i >= 0) {
-      const next = this.formScheduleWeekdays.filter((_, idx) => idx !== i);
-      if (next.length === 0) return;
-      this.formScheduleWeekdays = next;
-    } else {
-      this.formScheduleWeekdays = [...this.formScheduleWeekdays, day].sort((a, b) => a - b);
-    }
-  }
-
-  isWeekdaySelected(day: number): boolean {
-    return this.formScheduleWeekdays.includes(day);
-  }
-
-  toggleScript(scriptId: string): void {
-    if (this.formScripts.includes(scriptId)) {
-      this.formScripts = this.formScripts.filter((id) => id !== scriptId);
-    } else {
-      this.formScripts = [...this.formScripts, scriptId];
-    }
-  }
-
-  isScriptSelected(scriptId: string): boolean {
-    return this.formScripts.includes(scriptId);
-  }
-
-  /** Formato de número con 2 dígitos (para hora/minuto en template) */
-  pad2(n: number): string {
-    return String(n).padStart(2, '0');
-  }
-
-  save(): void {
-    const schedule = this.formSchedule;
-    const edit = this.editingJob();
-    if (edit) {
-      this.jobs.update((list) =>
-        list.map((j) =>
-          j.id === edit.id
-            ? {
-              ...j,
-              name: this.formName,
-              sourcePath: this.formSourcePath,
-              destinationName: this.formDestination,
-              schedule,
-              enabled: this.formEnabled,
-              scripts: this.formScripts,
-            }
-            : j
-        )
-      );
-    } else {
-      this.jobs.update((list) => [
-        ...list,
-        {
-          id: String(Date.now()),
-          name: this.formName,
-          sourcePath: this.formSourcePath,
-          destinationName: this.formDestination,
-          schedule,
-          enabled: this.formEnabled,
-          scripts: this.formScripts,
-        },
-      ]);
-    }
-    this.closeModal();
-  }
-
-  closeModal(): void {
-    this.showModal.set(false);
-    this.editingJob.set(null);
+    this.router.navigate(['/trabajos/nuevo', { id: job.id }]);
   }
 
   deleteJob(job: Job): void {
     if (confirm(`¿Eliminar trabajo "${job.name}"?`)) {
-      this.jobs.update((list) => list.filter((j) => j.id !== job.id));
+      this.jobsService.deleteJob(job.id);
+      this.toastService.show(`Trabajo eliminado: ${job.name}`, 'warning');
     }
   }
 
@@ -264,14 +93,15 @@ export class JobsComponent {
     return `Diario a las ${timeStr}`;
   }
 
-  getJobScriptNames(job: Job): string[] {
+  getJobScripts(job: Job): { name: string; when: 'pre' | 'post' }[] {
     const allScripts = this.availableScripts();
     return (job.scripts || [])
-      .map((id) => allScripts.find((s) => s.id === id)?.name)
-      .filter((name): name is string => !!name);
+      .map((js) => {
+        const s = allScripts.find((as) => as.id === js.scriptId);
+        return s ? { name: s.name, when: js.when } : null;
+      })
+      .filter((item): item is { name: string; when: 'pre' | 'post' } => !!item);
   }
 
-  get modalTitle(): string {
-    return this.editingJob() ? 'Editar trabajo' : 'Nuevo trabajo';
-  }
+
 }

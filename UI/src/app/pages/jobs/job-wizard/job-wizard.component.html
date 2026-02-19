@@ -1,0 +1,238 @@
+<div class="wizard-container">
+  <div class="wizard-header mb-4">
+    <h1 class="page-title">Nuevo Trabajo</h1>
+    <div class="steps-indicator d-flex justify-content-between align-items-center mt-3">
+      @for (step of steps; track $index) {
+        <div 
+          class="step-item text-center"
+          [class.active]="currentStep === $index"
+          [class.completed]="currentStep > $index"
+          (click)="goToStep($index)"
+          style="cursor: pointer;"
+        >
+          <div class="step-circle mb-2">{{ $index + 1 }}</div>
+          <span class="step-label d-none d-md-block">{{ step }}</span>
+        </div>
+        @if ($index < steps.length - 1) {
+          <div class="step-line flex-grow-1 mx-2"></div>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="wizard-content card shadow-sm border-0 mb-4">
+    <div class="card-body p-4">
+      
+      <!-- Paso 1: General -->
+      @if (currentStep === 0) {
+        <h4 class="mb-3">Información General</h4>
+        <div class="mb-3">
+          <label class="form-label fw-500">Nombre del trabajo</label>
+          <input type="text" class="form-control" [(ngModel)]="formName" placeholder="Ej: Backup diario" autofocus />
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-500">Descripción (Opcional)</label>
+          <textarea class="form-control" [(ngModel)]="formDescription" rows="3" placeholder="Detalles adicionales..."></textarea>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="jobEnabled" [(ngModel)]="formEnabled">
+          <label class="form-check-label" for="jobEnabled">Habilitar trabajo</label>
+        </div>
+      }
+
+      <!-- Paso 2: Destino -->
+      @if (currentStep === 1) {
+        <h4 class="mb-3">Destino</h4>
+        <div class="mb-3">
+          <label class="form-label fw-500">Seleccionar destino</label>
+          <select class="form-select" [(ngModel)]="formDestination">
+            <option value="" disabled selected>-- Elige un destino --</option>
+            <option value="S3 principal">S3 principal</option>
+            <option value="Google Drive backup">Google Drive backup</option>
+          </select>
+          <div class="form-text">Elige dónde se guardarán tus archivos.</div>
+        </div>
+      }
+
+      <!-- Paso 3: Fuente -->
+      @if (currentStep === 2) {
+        <h4 class="mb-3">Fuente de Datos</h4>
+        <div class="mb-3">
+          <label class="form-label fw-500">Ruta de origen</label>
+          <div class="input-group">
+            <input type="text" class="form-control" [(ngModel)]="formSourcePath" placeholder="C:\Carpeta\Datos" />
+            <button class="btn btn-outline-secondary" type="button">Examinar...</button>
+          </div>
+          <div class="form-text">Carpeta o archivo que deseas respaldar.</div>
+        </div>
+
+        <h5 class="mt-4 mb-3">Filtros y Exclusiones</h5>
+        
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="excludeHidden" [(ngModel)]="excludeHidden">
+            <label class="form-check-label" for="excludeHidden">Excluir archivos ocultos</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="excludeSystem" [(ngModel)]="excludeSystem">
+            <label class="form-check-label" for="excludeSystem">Excluir archivos de sistema</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="excludeTemporary" [(ngModel)]="excludeTemporary">
+            <label class="form-check-label" for="excludeTemporary">Excluir archivos temporales</label>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-500">Excluir archivos mayores a (MB)</label>
+            <input type="number" class="form-control" [(ngModel)]="excludeLargerThanMB" placeholder="Ej: 1024" min="0">
+            <div class="form-text">Dejar vacío para no filtrar por tamaño.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-500">Filtros personalizados</label>
+            <input type="text" class="form-control" [(ngModel)]="customFilters" placeholder="Ej: *.log, *.tmp, cache/">
+            <div class="form-text">Separados por comas. Soporta glob patterns.</div>
+          </div>
+        </div>
+
+      }
+
+      <!-- Paso 4: Programación -->
+      @if (currentStep === 3) {
+        <h4 class="mb-3">Programación (Schedule)</h4>
+        <div class="bg-light p-3 rounded mb-3">
+          <div class="mb-3">
+            <label class="form-label fw-500">Frecuencia</label>
+            <select class="form-select" [(ngModel)]="formScheduleType">
+              <option value="daily">Diario</option>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensual</option>
+            </select>
+          </div>
+
+          @if (formScheduleType === 'weekly') {
+            <div class="mb-3">
+              <span class="form-label d-block small text-muted mb-1">Días de la semana</span>
+              <div class="d-flex gap-2 flex-wrap">
+                @for (w of weekdayOptions; track w.value) {
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    [class.btn-primary]="isWeekdaySelected(w.value)"
+                    [class.btn-outline-secondary]="!isWeekdaySelected(w.value)"
+                    (click)="toggleWeekday(w.value)"
+                  >
+                    {{ w.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (formScheduleType === 'monthly') {
+            <div class="mb-3">
+              <label class="form-label small text-muted mb-1">Día del mes</label>
+              <select class="form-select w-auto" [(ngModel)]="formScheduleDayOfMonth">
+                @for (d of daysOfMonth; track d) {
+                  <option [value]="d">{{ d }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small text-muted mb-1">Hora</label>
+              <select class="form-select" [(ngModel)]="formScheduleHour">
+                @for (h of hours; track h) {
+                  <option [value]="h">{{ pad2(h) }}:00</option>
+                }
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted mb-1">Minuto</label>
+              <select class="form-select" [(ngModel)]="formScheduleMinute">
+                @for (m of minutes; track m) {
+                  <option [value]="m">{{ pad2(m) }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info py-2 small">
+          <i class="me-1 info-icon">ⓘ</i> El trabajo se ejecutará: <strong>{{ formSchedule }}</strong>
+        </div>
+      }
+
+      <!-- Paso 5: Opciones (Scripts) -->
+      @if (currentStep === 4) {
+        <h4 class="mb-3">Opciones y Scripts</h4>
+        <div class="mb-3">
+          <label class="form-label fw-500">Scripts asociados</label>
+          @if (availableScripts().length > 0) {
+            <div class="list-group">
+              @for (script of availableScripts(); track script.id) {
+                <div class="list-group-item">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <div class="fw-500">{{ script.name }}</div>
+                      <div class="text-muted small">{{ script.scriptPath }}</div>
+                      <span
+                        class="badge mt-1"
+                        [class.bg-primary]="script.scriptType === 'ps1'"
+                        [class.bg-dark]="script.scriptType === 'bat'"
+                        [class.bg-success]="script.scriptType === 'js'"
+                      >
+                        {{ script.scriptType }}
+                      </span>
+                    </div>
+                    <div class="d-flex gap-2">
+                       <button
+                          type="button"
+                          class="btn btn-sm"
+                          [class.btn-primary]="isScriptSelected(script.id, 'pre')"
+                          [class.btn-outline-secondary]="!isScriptSelected(script.id, 'pre')"
+                          (click)="toggleScript(script.id, 'pre')"
+                        >PRE</button>
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          [class.btn-info]="isScriptSelected(script.id, 'post')"
+                          [class.btn-outline-secondary]="!isScriptSelected(script.id, 'post')"
+                          (click)="toggleScript(script.id, 'post')"
+                        >POST</button>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="text-muted small border rounded p-3 bg-light text-center">
+              No hay scripts disponibles.
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+
+    <div class="card-footer bg-white d-flex justify-content-between p-3 border-top-0">
+      <button 
+        type="button" 
+        class="btn btn-secondary btn-modern" 
+        (click)="currentStep === 0 ? cancel() : prevStep()"
+      >
+        {{ currentStep === 0 ? 'Cancelar' : 'Atrás' }}
+      </button>
+      
+      <button 
+        type="button" 
+        class="btn btn-primary btn-modern px-4" 
+        (click)="nextStep()"
+      >
+        {{ currentStep === steps.length - 1 ? 'Finalizar' : 'Siguiente' }}
+      </button>
+    </div>
+  </div>
+</div>

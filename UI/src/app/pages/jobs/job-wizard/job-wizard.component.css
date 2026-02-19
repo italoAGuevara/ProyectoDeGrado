@@ -1,0 +1,94 @@
+
+.wizard-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.wizard-header {
+  text-align: center;
+}
+
+.steps-indicator {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.step-item {
+  position: relative;
+  z-index: 10;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.step-item.active .step-circle {
+  background-color: #0d6efd;
+  color: white;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+}
+
+.step-item.completed .step-circle {
+  background-color: #198754;
+  color: white;
+}
+
+.step-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6c757d;
+  margin-top: 0.5rem;
+}
+
+.step-item.active .step-label {
+  color: #0d6efd;
+}
+
+.step-line {
+  height: 2px;
+  background-color: #e9ecef;
+  flex-grow: 1;
+  margin: 0 10px;
+  align-self: center;
+  margin-bottom: 24px; /* Align with circles */
+}
+
+/* Adjust line position */
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.wizard-content {
+  min-height: 400px;
+}
+
+.btn-modern {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-modern:hover {
+  transform: translateY(-1px);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
