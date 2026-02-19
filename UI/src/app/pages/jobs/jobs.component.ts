@@ -1,5 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CopyScript, ScriptsService } from '../../services/scripts.service';
+import { ToastService } from '../../services/toast.service';
 
 interface Job {
   id: string;
@@ -8,6 +10,7 @@ interface Job {
   destinationName: string;
   schedule: string;
   enabled: boolean;
+  scripts: string[]; // IDs de scripts seleccionados
 }
 
 /** Cron: minuto hora díaMes mes díaSemana (0=domingo, 6=sábado) */
@@ -28,10 +31,30 @@ const WEEKDAY_LABELS: { value: number; label: string }[] = [
   templateUrl: './jobs.component.html',
 })
 export class JobsComponent {
+  private scriptsService = inject(ScriptsService);
+  private toastService = inject(ToastService);
+
   readonly weekdayOptions = WEEKDAY_LABELS;
   readonly hours = Array.from({ length: 24 }, (_, i) => i);
+  // ... (rest of the code)
+
+  // ...
+
+  runJob(job: Job): void {
+    // Aquí conectarás con el backend para ejecutar el trabajo
+    this.runningJobId.set(job.id);
+    this.toastService.show(`Iniciando trabajo: ${job.name}`, 'info');
+
+    setTimeout(() => {
+      this.runningJobId.set(null);
+      this.toastService.show(`Trabajo finalizado: ${job.name}`, 'success');
+      // Por ahora solo feedback visual; luego: llamar API y mostrar resultado
+    }, 1500);
+  }
   readonly minutes = [0, 15, 30, 45];
   readonly daysOfMonth = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  availableScripts = this.scriptsService.scripts;
 
   jobs = signal<Job[]>([
     {
@@ -41,6 +64,7 @@ export class JobsComponent {
       destinationName: 'S3 principal',
       schedule: '0 2 * * *',
       enabled: true,
+      scripts: ['1'],
     },
   ]);
 
@@ -58,6 +82,9 @@ export class JobsComponent {
   /** Día del mes (1-31) para mensual */
   formScheduleDayOfMonth = 1;
   formEnabled = true;
+
+  /** IDs de scripts seleccionados en el formulario */
+  formScripts: string[] = [];
 
   get formSchedule(): string {
     const m = this.formScheduleMinute;
@@ -84,6 +111,7 @@ export class JobsComponent {
     this.formScheduleWeekdays = [1];
     this.formScheduleDayOfMonth = 1;
     this.formEnabled = true;
+    this.formScripts = [];
     this.showModal.set(true);
   }
 
@@ -93,6 +121,7 @@ export class JobsComponent {
     this.formSourcePath = job.sourcePath;
     this.formDestination = job.destinationName;
     this.formEnabled = job.enabled;
+    this.formScripts = [...(job.scripts || [])];
     this.parseCronToForm(job.schedule);
     this.showModal.set(true);
   }
@@ -145,6 +174,18 @@ export class JobsComponent {
     return this.formScheduleWeekdays.includes(day);
   }
 
+  toggleScript(scriptId: string): void {
+    if (this.formScripts.includes(scriptId)) {
+      this.formScripts = this.formScripts.filter((id) => id !== scriptId);
+    } else {
+      this.formScripts = [...this.formScripts, scriptId];
+    }
+  }
+
+  isScriptSelected(scriptId: string): boolean {
+    return this.formScripts.includes(scriptId);
+  }
+
   /** Formato de número con 2 dígitos (para hora/minuto en template) */
   pad2(n: number): string {
     return String(n).padStart(2, '0');
@@ -158,13 +199,14 @@ export class JobsComponent {
         list.map((j) =>
           j.id === edit.id
             ? {
-                ...j,
-                name: this.formName,
-                sourcePath: this.formSourcePath,
-                destinationName: this.formDestination,
-                schedule,
-                enabled: this.formEnabled,
-              }
+              ...j,
+              name: this.formName,
+              sourcePath: this.formSourcePath,
+              destinationName: this.formDestination,
+              schedule,
+              enabled: this.formEnabled,
+              scripts: this.formScripts,
+            }
             : j
         )
       );
@@ -178,6 +220,7 @@ export class JobsComponent {
           destinationName: this.formDestination,
           schedule,
           enabled: this.formEnabled,
+          scripts: this.formScripts,
         },
       ]);
     }
@@ -195,14 +238,6 @@ export class JobsComponent {
     }
   }
 
-  runJob(job: Job): void {
-    // Aquí conectarás con el backend para ejecutar el trabajo
-    this.runningJobId.set(job.id);
-    setTimeout(() => {
-      this.runningJobId.set(null);
-      // Por ahora solo feedback visual; luego: llamar API y mostrar resultado
-    }, 1500);
-  }
 
   /** ID del trabajo que se está ejecutando (para estado visual) */
   runningJobId = signal<string | null>(null);
@@ -227,6 +262,13 @@ export class JobsComponent {
       return `Semanal (${days.join(', ')}) a las ${timeStr}`;
     }
     return `Diario a las ${timeStr}`;
+  }
+
+  getJobScriptNames(job: Job): string[] {
+    const allScripts = this.availableScripts();
+    return (job.scripts || [])
+      .map((id) => allScripts.find((s) => s.id === id)?.name)
+      .filter((name): name is string => !!name);
   }
 
   get modalTitle(): string {

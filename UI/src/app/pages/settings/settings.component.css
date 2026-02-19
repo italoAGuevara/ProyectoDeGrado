@@ -1,0 +1,16 @@
+
+.card-header {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-weight: 500;
+}
+.card-body {
+  padding: 1.5rem;
+}
+.page-title {
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+.alert {
+  margin-bottom: 1rem;
+}

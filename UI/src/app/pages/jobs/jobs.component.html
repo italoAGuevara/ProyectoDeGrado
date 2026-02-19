@@ -16,6 +16,7 @@
               <th>Origen</th>
               <th>Destino</th>
               <th>Programación</th>
+              <th>Scripts</th>
               <th>Estado</th>
               <th class="text-end">Acciones</th>
             </tr>
@@ -27,6 +28,14 @@
                 <td><code class="small bg-light px-2 py-1 rounded">{{ job.sourcePath }}</code></td>
                 <td>{{ job.destinationName }}</td>
                 <td><span class="badge bg-light text-dark">{{ scheduleLabel(job.schedule) }}</span></td>
+                <td>
+                  @for (s of getJobScriptNames(job); track $index) {
+                    <span class="badge bg-secondary me-1">{{ s }}</span>
+                  }
+                  @if (getJobScriptNames(job).length === 0) {
+                    <span class="text-muted small">-</span>
+                  }
+                </td>
                 <td>
                   @if (job.enabled) {
                     <span class="badge bg-success">Activo</span>
@@ -153,6 +162,44 @@
               </div>
             </div>
           </div>
+          <div class="mb-3">
+            <label class="form-label fw-500">Scripts</label>
+            @if (availableScripts().length > 0) {
+              <div class="list-group">
+                @for (script of availableScripts(); track script.id) {
+                  <label class="list-group-item d-flex gap-2 align-items-center" style="cursor: pointer;">
+                    <input
+                      class="form-check-input flex-shrink-0"
+                      type="checkbox"
+                      [checked]="isScriptSelected(script.id)"
+                      (change)="toggleScript(script.id)"
+                    />
+                    <div class="d-flex flex-column small w-100">
+                      <div class="d-flex justify-content-between">
+                        <span class="fw-500">{{ script.name }}</span>
+                        <span
+                          class="badge"
+                          [class.bg-primary]="script.scriptType === 'ps1'"
+                          [class.bg-dark]="script.scriptType === 'bat'"
+                          [class.bg-success]="script.scriptType === 'js'"
+                        >
+                          {{ script.scriptType }}
+                        </span>
+                      </div>
+                      <span class="text-muted" style="font-size: 0.8rem;">
+                        {{ script.scriptPath }}
+                      </span>
+                    </div>
+                  </label>
+                }
+              </div>
+            } @else {
+              <div class="text-muted small border rounded p-2 bg-light">
+                No hay scripts disponibles.
+              </div>
+            }
+          </div>
+
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="jobEnabled" [(ngModel)]="formEnabled" />
             <label class="form-check-label" for="jobEnabled">Trabajo activo</label>

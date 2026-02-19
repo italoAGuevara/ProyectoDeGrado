@@ -1,25 +1,7 @@
 import { NgClass } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
-export type ScriptWhen = 'pre' | 'post';
-
-/** Solo se permiten scripts .ps1, .bat y .js */
-export type ScriptType = 'ps1' | 'bat' | 'js';
-
-export interface CopyScript {
-  id: string;
-  name: string;
-  when: ScriptWhen;
-  /** Tipo de script permitido: .ps1, .bat o .js */
-  scriptType: ScriptType;
-  /** Ruta al archivo del script (debe coincidir con la extensión de scriptType) */
-  scriptPath: string;
-  /** Argumentos opcionales al invocar el script */
-  arguments: string;
-  order: number;
-  enabled: boolean;
-}
+import { CopyScript, ScriptsService, ScriptType, ScriptWhen } from '../../services/scripts.service';
 
 @Component({
   selector: 'app-scripts',
@@ -28,34 +10,15 @@ export interface CopyScript {
   templateUrl: './scripts.component.html',
 })
 export class ScriptsComponent {
+  private scriptsService = inject(ScriptsService);
+
   readonly allowedTypes: { value: ScriptType; label: string }[] = [
     { value: 'ps1', label: 'PowerShell (.ps1)' },
     { value: 'bat', label: 'Batch (.bat)' },
     { value: 'js', label: 'Node.js (.js)' },
   ];
 
-  scripts = signal<CopyScript[]>([
-    {
-      id: '1',
-      name: 'Preparar carpetas',
-      when: 'pre',
-      scriptType: 'ps1',
-      scriptPath: 'C:\\Scripts\\pre-backup.ps1',
-      arguments: '',
-      order: 1,
-      enabled: true,
-    },
-    {
-      id: '2',
-      name: 'Notificar fin',
-      when: 'post',
-      scriptType: 'js',
-      scriptPath: 'C:\\Scripts\\notify.js',
-      arguments: '',
-      order: 1,
-      enabled: true,
-    },
-  ]);
+  scripts = this.scriptsService.scripts;
 
   showModal = signal(false);
   editingScript = signal<CopyScript | null>(null);
@@ -124,11 +87,9 @@ export class ScriptsComponent {
     };
 
     if (edit) {
-      this.scripts.update((list) =>
-        list.map((s) => (s.id === edit.id ? script : s))
-      );
+      this.scriptsService.updateScript(script);
     } else {
-      this.scripts.update((list) => [...list, script]);
+      this.scriptsService.addScript(script);
     }
     this.closeModal();
   }
@@ -140,7 +101,7 @@ export class ScriptsComponent {
 
   deleteScript(script: CopyScript): void {
     if (confirm(`¿Eliminar script "${script.name}"?`)) {
-      this.scripts.update((list) => list.filter((s) => s.id !== script.id));
+      this.scriptsService.deleteScript(script.id);
     }
   }
 
