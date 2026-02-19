@@ -27,7 +27,6 @@ export class ScriptsComponent {
   formScriptType: ScriptType = 'ps1';
   formScriptPath = '';
   formArguments = '';
-  formOrder = 1;
   formEnabled = true;
   formPathError = signal<string | null>(null);
 
@@ -38,7 +37,6 @@ export class ScriptsComponent {
     this.formScriptType = 'ps1';
     this.formScriptPath = '';
     this.formArguments = '';
-    this.formOrder = 1;
     this.formEnabled = true;
     this.formPathError.set(null);
     this.showModal.set(true);
@@ -50,7 +48,6 @@ export class ScriptsComponent {
     this.formScriptType = script.scriptType;
     this.formScriptPath = script.scriptPath;
     this.formArguments = script.arguments;
-    this.formOrder = script.order;
     this.formEnabled = script.enabled;
     this.formPathError.set(null);
     this.showModal.set(true);
@@ -80,7 +77,6 @@ export class ScriptsComponent {
       scriptType: this.formScriptType,
       scriptPath: this.formScriptPath.trim(),
       arguments: this.formArguments,
-      order: this.formOrder,
       enabled: this.formEnabled,
     };
 

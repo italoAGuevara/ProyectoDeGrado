@@ -19,10 +19,8 @@
             <tr>
               <th>Nombre</th>
               <th>Cuándo</th>
-              <th>Tipo</th>
               <th>Ruta del script</th>
               <th>Argumentos</th>
-              <th>Orden</th>
               <th>Estado</th>
               <th class="text-end">Acciones</th>
             </tr>
@@ -44,7 +42,6 @@
                     <span class="text-muted">—</span>
                   }
                 </td>
-                <td>{{ script.order }}</td>
                 <td>
                   @if (script.enabled) {
                     <span class="badge bg-success">Activo</span>
@@ -90,7 +87,6 @@
       <ul class="text-muted small mb-0">
         <li><strong>Pre-copiado:</strong> se ejecutan antes de iniciar la copia (ej: comprimir, validar).</li>
         <li><strong>Post-copiado:</strong> se ejecutan después de terminar la copia (ej: notificar, limpiar).</li>
-        <li>El <strong>orden</strong> define la secuencia cuando hay varios del mismo tipo (menor = primero).</li>
         <li>Solo se permiten scripts <strong>.ps1</strong> (PowerShell), <strong>.bat</strong> (Batch) y <strong>.js</strong> (Node.js).</li>
       </ul>
     </div>

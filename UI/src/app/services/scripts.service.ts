@@ -14,7 +14,6 @@ export interface CopyScript {
     scriptPath: string;
     /** Argumentos opcionales al invocar el script */
     arguments: string;
-    order: number;
     enabled: boolean;
 }
 
@@ -29,7 +28,6 @@ export class ScriptsService {
             scriptType: 'ps1',
             scriptPath: 'C:\\Scripts\\pre-backup.ps1',
             arguments: '',
-            order: 1,
             enabled: true,
         },
         {
@@ -38,7 +36,6 @@ export class ScriptsService {
             scriptType: 'js',
             scriptPath: 'C:\\Scripts\\notify.js',
             arguments: '',
-            order: 1,
             enabled: true,
         },
     ]);
