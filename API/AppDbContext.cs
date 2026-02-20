@@ -1,4 +1,4 @@
-﻿using API.Features.Login.Entities;
+using API.Features.Login.Entities;
 using HostedService.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,22 +21,25 @@ namespace API
 
             modelBuilder.Entity<RelationJobsAndScript>(entity =>
             {
-                // Definir Clave Primaria Compuesta
                 entity.HasKey(rj => new { rj.ScriptId, rj.JobId });
 
-                // Relación con BackupJob
                 entity.HasOne(rj => rj.BackupJob)
                       .WithMany(b => b.Scripts)
-                      .HasForeignKey(rj => rj.ScriptId);
+                      .HasForeignKey(rj => rj.JobId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
-                // Relación con ScriptConfiguration
                 entity.HasOne(rj => rj.Script)
                       .WithMany(s => s.Jobs)
-                      .HasForeignKey(rj => rj.Id);
+                      .HasForeignKey(rj => rj.ScriptId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlite("Data Source=mibase.db");
+        {
+            options.UseSqlite("Data Source=mibase.db");
+            // No lanzar excepción si el modelo tiene cambios pendientes (hay que añadir una migración).
+            options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
     }
 }

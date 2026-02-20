@@ -1,5 +1,6 @@
 using API;
 using API.Features.Login;
+using API.Features.Login.Entities;
 using API.Middleware;
 using HostedService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -78,6 +79,17 @@ builder.Services.AddHostedService<Robot>();
 
 var app = builder.Build();
 
+// Asegurar que exista el usuario único (contraseña por defecto: admin)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+    if (!db.Users.Any())
+    {
+        db.Users.Add(new User { PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin") });
+        db.SaveChanges();
+    }
+}
 
 app.UseCors(_cors);
 

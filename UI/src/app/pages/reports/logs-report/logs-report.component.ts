@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { ReportBreadcrumbComponent, BreadcrumbItem } from '../../../layout/report-breadcrumb/report-breadcrumb.component';
 
@@ -16,7 +15,7 @@ export interface LogEntry {
 @Component({
   selector: 'app-logs-report',
   standalone: true,
-  imports: [RouterLink, ReportBreadcrumbComponent, NgClass],
+  imports: [ReportBreadcrumbComponent, NgClass],
   templateUrl: './logs-report.component.html',
   styleUrl: './logs-report.component.css',
 })

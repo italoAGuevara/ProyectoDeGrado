@@ -15,15 +15,17 @@ import { AboutComponent } from './pages/about/about.component';
 import { AboutGeneralComponent } from './pages/about/about-general/about-general.component';
 import { AboutLibrariesComponent } from './pages/about/about-libraries/about-libraries.component';
 import { LoginComponent } from './pages/login/login.component';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: 'login',
-    component: LoginComponent
+    component: LoginComponent,
   },
   {
     path: '',
     component: DashboardLayoutComponent,
+    canActivate: [authGuard],
     children: [
       { path: '', component: HomeComponent },
       { path: 'trabajos', component: JobsComponent },

@@ -1,4 +1,4 @@
-﻿using API.Exceptions;
+using API.Exceptions;
 using Newtonsoft.Json;
 using System.Net;
 
@@ -45,6 +45,10 @@ namespace API.Middleware
 
                     case BadRequestException badRequestException:
                         statusCode = (int)HttpStatusCode.BadRequest;
+                        break;
+
+                    case UnauthorizedException unauthorizedException:
+                        statusCode = (int)HttpStatusCode.Unauthorized;
                         break;
 
                     default:

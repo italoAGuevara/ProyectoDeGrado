@@ -1,4 +1,4 @@
-﻿using API.Exceptions;
+using API.Exceptions;
 using API.Utility;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,17 +15,17 @@ namespace API.Features.Login
 
             if (user is null)
             {
-                throw new InternalServerException("Error login");
+                throw new InternalServerException("No hay usuario configurado.");
             }
-                        
+
             bool verified = BCrypt.Net.BCrypt.Verify(request.password, user.PasswordHash);
 
             if (verified)
-            {                
+            {
                 return JWTHelpers.GenerateToken("admin");
             }
 
-            throw new InternalServerException("Error login");
+            throw new UnauthorizedException("Contraseña incorrecta");
         }
     }
 }

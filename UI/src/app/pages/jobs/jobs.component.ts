@@ -78,6 +78,11 @@ export class JobsComponent {
     this.currentPage.set(Math.max(1, Math.min(page, max)));
   }
 
+  onPageSizeChange(value: number | string): void {
+    this.pageSize.set(Number(value));
+    this.setPage(1);
+  }
+
   openCreate(): void {
     this.router.navigate(['/trabajos/nuevo']);
   }

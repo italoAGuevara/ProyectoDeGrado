@@ -1,6 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
     selector: 'app-login',
@@ -11,6 +13,8 @@ import { Router } from '@angular/router';
 })
 export class LoginComponent {
     private router = inject(Router);
+    private authService = inject(AuthService);
+    private cdr = inject(ChangeDetectorRef);
 
     password = '';
     showPassword = false;
@@ -18,19 +22,28 @@ export class LoginComponent {
     error = '';
     loading = false;
 
+    constructor() {
+        if (this.authService.isLoggedIn()) {
+            this.router.navigate(['/']);
+        }
+    }
+
     login() {
         this.loading = true;
         this.error = '';
 
-        // Simular delay de red
-        setTimeout(() => {
-            this.loading = false;
-            // Aquí iría la validación real contra un servicio
-            if (this.password === '123456') { // Mock check
-                this.router.navigate(['/']);
-            } else {
-                this.error = 'Contraseña incorrecta';
-            }
-        }, 1000);
+        this.authService.login(this.password).pipe(
+            finalize(() => {
+                this.loading = false;
+                this.cdr.detectChanges();
+            })
+        ).subscribe({
+            next: () => this.router.navigate(['/']),
+            error: (err) => {
+                this.loading = false;
+                this.error = err?.error?.message ?? err?.error?.Message ?? (err?.status === 401 ? 'Contraseña incorrecta' : 'Error al iniciar sesión');
+                this.cdr.detectChanges();
+            },
+        });
     }
 }

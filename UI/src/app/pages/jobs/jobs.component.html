@@ -133,7 +133,7 @@
               id="pageSize"
               class="form-select form-select-sm paginator-select"
               [ngModel]="pageSize()"
-              (ngModelChange)="pageSize.set(Number($event)); setPage(1)">
+              (ngModelChange)="onPageSizeChange($event)">
               <option [ngValue]="5">5</option>
               <option [ngValue]="10">10</option>
               <option [ngValue]="25">25</option>
