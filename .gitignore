@@ -63,3 +63,5 @@ bld/
 .DS_Store
 Thumbs.db
 desktop.ini
+API/mibase.db-shm
+API/mibase.db-shm
