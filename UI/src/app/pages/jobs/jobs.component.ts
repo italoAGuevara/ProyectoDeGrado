@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ScriptsService } from '../../services/scripts.service';
@@ -21,6 +21,7 @@ const WEEKDAY_LABELS: { value: number; label: string }[] = [
   standalone: true,
   imports: [FormsModule],
   templateUrl: './jobs.component.html',
+  styleUrl: './jobs.component.css',
 })
 export class JobsComponent {
   private router = inject(Router);
@@ -28,6 +29,7 @@ export class JobsComponent {
   private toastService = inject(ToastService);
   private jobsService = inject(JobsService);
 
+  readonly Math = Math;
   readonly weekdayOptions = WEEKDAY_LABELS;
   readonly hours = Array.from({ length: 24 }, (_, i) => i);
   // ... (rest of the code)
@@ -52,6 +54,30 @@ export class JobsComponent {
 
   jobs = this.jobsService.jobs;
 
+  readonly pageSize = signal(10);
+  readonly currentPage = signal(1);
+
+  readonly totalItems = computed(() => this.jobs().length);
+  readonly totalPages = computed(() => {
+    const total = this.totalItems();
+    const size = this.pageSize();
+    return size <= 0 ? 1 : Math.ceil(total / size);
+  });
+  readonly paginatedJobs = computed(() => {
+    const list = this.jobs();
+    const size = this.pageSize();
+    const page = this.currentPage();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+  readonly hasPrevPage = computed(() => this.currentPage() > 1);
+  readonly hasNextPage = computed(() => this.currentPage() < this.totalPages());
+
+  setPage(page: number): void {
+    const max = this.totalPages();
+    this.currentPage.set(Math.max(1, Math.min(page, max)));
+  }
+
   openCreate(): void {
     this.router.navigate(['/trabajos/nuevo']);
   }
@@ -67,6 +93,14 @@ export class JobsComponent {
     }
   }
 
+  togglePause(job: Job): void {
+    this.jobsService.updateJob({ ...job, enabled: !job.enabled });
+    if (job.enabled) {
+      this.toastService.show(`Trabajo pausado: ${job.name}`, 'info');
+    } else {
+      this.toastService.show(`Trabajo activado: ${job.name}`, 'success');
+    }
+  }
 
   /** ID del trabajo que se está ejecutando (para estado visual) */
   runningJobId = signal<string | null>(null);

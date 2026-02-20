@@ -1,8 +1,11 @@
 <div class="container-fluid px-0">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="page-title">Trabajos</h1>
-    <button type="button" class="btn btn-primary btn-modern" (click)="openCreate()">
-      + Nuevo trabajo
+    <button type="button" class="btn btn-primary btn-cta" (click)="openCreate()">
+      <span class="btn-cta-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </span>
+      Nuevo trabajo
     </button>
   </div>
 
@@ -22,7 +25,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (job of jobs(); track job.id) {
+            @for (job of paginatedJobs(); track job.id) {
               <tr>
                 <td class="fw-500">{{ job.name }}</td>
                 <td><code class="small bg-light px-2 py-1 rounded">{{ job.sourcePath }}</code></td>
@@ -53,7 +56,7 @@
                 <td class="text-end">
                   <button
                     type="button"
-                    class="btn btn-sm btn-outline-success me-1 btn-modern btn-icon"
+                    class="btn btn-sm btn-outline-success me-1 btn-modern btn-icon btn-action btn-action-run"
                     (click)="runJob(job)"
                     [disabled]="isRunning(job)"
                     [attr.aria-label]="isRunning(job) ? 'Ejecutando…' : 'Ejecutar'"
@@ -65,17 +68,32 @@
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>
                     }
                   </button>
-                  <button type="button" class="btn btn-sm btn-outline-primary me-1 btn-modern btn-icon" (click)="openEdit(job)" aria-label="Editar">
+                  <button
+                    type="button"
+                    class="btn btn-sm me-1 btn-modern btn-icon btn-action btn-action-toggle"
+                    [class.btn-outline-secondary]="job.enabled"
+                    [class.btn-outline-success]="!job.enabled"
+                    (click)="togglePause(job)"
+                    [attr.aria-label]="job.enabled ? 'Pausar' : 'Activar'"
+                    [title]="job.enabled ? 'Pausar trabajo' : 'Activar trabajo'"
+                  >
+                    @if (job.enabled) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 3.5A.5.5 0 0 1 6 4v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm5 0A.5.5 0 0 1 11 4v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/></svg>
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m6.271 5.055 1.125-.697c.418-.26.953.231.953.697v4.89c0 .466-.535.957-.953.697l-1.125-.697a.697.697 0 0 1 0-1.193z"/></svg>
+                    }
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 btn-modern btn-icon btn-action btn-action-edit" (click)="openEdit(job)" aria-label="Editar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5v.5a.5.5 0 0 1 .5.5v.5h.5V10h.207l6.5-6.5zm-3.5 2.5L2 12.293V13h.707l6.5-6.5H9.5v-.5H9v-.5H8.5V5H8v-.5H7.5V4h-.293L2 9.293v.586l3-3z"/></svg>
                   </button>
-                  <button type="button" class="btn btn-sm btn-outline-danger btn-modern btn-icon" (click)="deleteJob(job)" aria-label="Eliminar">
+                  <button type="button" class="btn btn-sm btn-outline-danger btn-modern btn-icon btn-action btn-action-delete" (click)="deleteJob(job)" aria-label="Eliminar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
                   </button>
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="6" class="text-center text-muted py-5">
+                <td colspan="7" class="text-center text-muted py-5">
                   No hay trabajos. Crea uno con el botón "Nuevo trabajo".
                 </td>
               </tr>
@@ -83,6 +101,47 @@
           </tbody>
         </table>
       </div>
+      @if (totalItems() > 0) {
+        <div class="table-paginator">
+          <div class="paginator-info text-muted small">
+            Mostrando {{ (currentPage() - 1) * pageSize() + 1 }}–{{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
+          </div>
+          <div class="paginator-controls">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary paginator-btn"
+              [disabled]="!hasPrevPage()"
+              (click)="setPage(currentPage() - 1)"
+              aria-label="Página anterior">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+            </button>
+            <span class="paginator-pages">
+              Página <strong>{{ currentPage() }}</strong> de <strong>{{ totalPages() }}</strong>
+            </span>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary paginator-btn"
+              [disabled]="!hasNextPage()"
+              (click)="setPage(currentPage() + 1)"
+              aria-label="Página siguiente">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+            </button>
+          </div>
+          <div class="paginator-size">
+            <label for="pageSize" class="small text-muted me-2">Por página</label>
+            <select
+              id="pageSize"
+              class="form-select form-select-sm paginator-select"
+              [ngModel]="pageSize()"
+              (ngModelChange)="pageSize.set(Number($event)); setPage(1)">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+          </div>
+        </div>
+      }
     </div>
   </div>
 </div>

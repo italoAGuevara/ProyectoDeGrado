@@ -1,8 +1,11 @@
 <div class="container-fluid px-0">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="page-title">Destinos</h1>
-    <button type="button" class="btn btn-primary btn-modern" (click)="openCreate()">
-      + Nuevo destino
+    <button type="button" class="btn btn-primary btn-cta" (click)="openCreate()">
+      <span class="btn-cta-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </span>
+      Nuevo destino
     </button>
   </div>
 
@@ -16,22 +19,44 @@
               <span class="badge" [ngClass]="typeBadgeClass(d.type)">{{ typeLabel(d.type) }}</span>
             </div>
             @if (d.type === 's3') {
-              <p class="card-text small text-muted mb-1">
-                Bucket: <code class="bg-light px-2 py-1 rounded">{{ d.config['bucket'] }}</code>
-              </p>
-              <p class="card-text small text-muted mb-3">
-                Región: <code class="bg-light px-2 py-1 rounded">{{ d.config['region'] }}</code>
-              </p>
+              @if (d.config['bucket']) {
+                <p class="card-text small text-muted mb-1">
+                  Bucket: <code class="bg-light px-2 py-1 rounded">{{ d.config['bucket'] }}</code>
+                </p>
+              }
+              @if (d.config['region']) {
+                <p class="card-text small text-muted mb-1">
+                  Región: <code class="bg-light px-2 py-1 rounded">{{ d.config['region'] }}</code>
+                </p>
+              }
+              @if (d.config['accessKeyId']) {
+                <p class="card-text small text-muted mb-3">
+                  Credenciales: <span class="text-muted">configuradas</span>
+                </p>
+              }
+              @if (!d.config['bucket'] && !d.config['accessKeyId']) {
+                <p class="card-text small text-muted mb-3">Sin configuración</p>
+              }
             } @else {
-              <p class="card-text small text-muted mb-3">
-                Folder ID: <code class="bg-light px-2 py-1 rounded">{{ d.config['folderId'] }}</code>
-              </p>
+              @if (d.config['serviceAccountEmail']) {
+                <p class="card-text small text-muted mb-1">
+                  Service Account: <code class="bg-light px-2 py-1 rounded small">{{ d.config['serviceAccountEmail'] }}</code>
+                </p>
+              }
+              @if (d.config['folderId']) {
+                <p class="card-text small text-muted mb-3">
+                  Folder ID: <code class="bg-light px-2 py-1 rounded">{{ d.config['folderId'] }}</code>
+                </p>
+              }
+              @if (!d.config['folderId'] && !d.config['serviceAccountEmail']) {
+                <p class="card-text small text-muted mb-3">Sin configuración</p>
+              }
             }
             <div class="d-flex gap-2">
-              <button type="button" class="btn btn-sm btn-outline-primary btn-modern btn-icon" (click)="openEdit(d)" aria-label="Editar">
+              <button type="button" class="btn btn-sm btn-outline-primary btn-modern btn-icon btn-action btn-action-edit" (click)="openEdit(d)" aria-label="Editar">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5v.5a.5.5 0 0 1 .5.5v.5h.5V10h.207l6.5-6.5zm-3.5 2.5L2 12.293V13h.707l6.5-6.5H9.5v-.5H9v-.5H8.5V5H8v-.5H7.5V4h-.293L2 9.293v.586l3-3z"/></svg>
               </button>
-              <button type="button" class="btn btn-sm btn-outline-danger btn-modern btn-icon" (click)="deleteDest(d)" aria-label="Eliminar">
+              <button type="button" class="btn btn-sm btn-outline-danger btn-modern btn-icon btn-action btn-action-delete" (click)="deleteDest(d)" aria-label="Eliminar">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
               </button>
             </div>
@@ -74,23 +99,122 @@
 
           @if (formType === 's3') {
             <div class="mb-3">
-              <label class="form-label fw-500">Bucket</label>
-              <input type="text" class="form-control" [(ngModel)]="formBucket" placeholder="nombre-del-bucket" />
+              <label class="form-label fw-500">Forma de conexión</label>
+              <div class="d-flex flex-column gap-2">
+                <div class="form-check">
+                  <input
+                    type="radio"
+                    class="form-check-input"
+                    name="s3Mode"
+                    id="s3ModeBucket"
+                    value="bucket_region"
+                    [(ngModel)]="formS3Mode"
+                  />
+                  <label class="form-check-label" for="s3ModeBucket">Bucket y Región(IAM)</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    type="radio"
+                    class="form-check-input"
+                    name="s3Mode"
+                    id="s3ModeCredentials"
+                    value="credentials"
+                    [(ngModel)]="formS3Mode"
+                  />
+                  <label class="form-check-label" for="s3ModeCredentials">Access Key ID y Secret Access Key</label>
+                </div>
+              </div>
+            </div>
+            @if (formS3Mode === 'bucket_region') {
+              <div class="mb-3">
+                <label class="form-label fw-500">Bucket</label>
+                <input type="text" class="form-control" [(ngModel)]="formBucket" placeholder="nombre-del-bucket" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-500">Región</label>
+                <input type="text" class="form-control" [(ngModel)]="formRegion" placeholder="us-east-1" />
+              </div>
+            } @else {
+              <div class="mb-3">
+                <label class="form-label fw-500">Access Key ID</label>
+                <input type="text" class="form-control" [(ngModel)]="formAccessKeyId" placeholder="AKIA..." autocomplete="off" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-500">Secret Access Key</label>
+                <input type="password" class="form-control" [(ngModel)]="formSecretAccessKey" placeholder="••••••••" autocomplete="new-password" />
+              </div>
+            }
+          } @else {
+            <p class="small text-muted mb-2">Usa una cuenta de servicio de Google Cloud con acceso a Google Drive. Obtén el JSON en la consola de Google Cloud y extrae <code>client_email</code> y <code>private_key</code>.</p>
+            <div class="mb-3">
+              <label class="form-label fw-500">Correo de la Service Account</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="formGoogleServiceAccountEmail"
+                placeholder="nombre@proyecto.iam.gserviceaccount.com"
+                autocomplete="off"
+              />
             </div>
             <div class="mb-3">
-              <label class="form-label fw-500">Región</label>
-              <input type="text" class="form-control" [(ngModel)]="formRegion" placeholder="us-east-1" />
+              <label class="form-label fw-500">Clave privada (private_key)</label>
+              <textarea
+                class="form-control font-monospace small"
+                [(ngModel)]="formGooglePrivateKey"
+                placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
+                rows="4"
+                autocomplete="off"
+              ></textarea>
+              <p class="small text-muted mb-0 mt-1">Pega el contenido completo del campo <code>private_key</code> del JSON de la cuenta de servicio.</p>
             </div>
-          } @else {
             <div class="mb-3">
               <label class="form-label fw-500">ID de carpeta (Google Drive)</label>
-              <input type="text" class="form-control" [(ngModel)]="formFolderId" placeholder="ID de la carpeta" />
+              <input type="text" class="form-control" [(ngModel)]="formFolderId" placeholder="ID de la carpeta de destino" />
+              <p class="small text-muted mb-0 mt-1">Carpeta donde se subirán los archivos. Comparte la carpeta en Drive con el correo de la Service Account (como editor).</p>
             </div>
           }
+
+          <div class="mb-0 pt-2 border-top mt-3">
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-modern"
+              (click)="testConnection()"
+              [disabled]="testingConnection()"
+            >
+              @if (testingConnection()) {
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              }
+              Probar conexión
+            </button>
+            @if (testResult(); as result) {
+              <div
+                class="mt-2 small d-flex align-items-center gap-2"
+                [class.text-success]="result.success"
+                [class.text-danger]="!result.success"
+              >
+                @if (result.success) {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+                }
+                <span>{{ result.message }}</span>
+              </div>
+            }
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-modern" (click)="closeModal()">Cancelar</button>
-          <button type="button" class="btn btn-primary btn-modern" (click)="save()">Guardar</button>
+          <button type="button" class="btn btn-modal-cancel" (click)="closeModal()">
+            <span class="btn-modal-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </span>
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-modal-save" (click)="save()">
+            <span class="btn-modal-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            </span>
+            Guardar
+          </button>
         </div>
       </div>
     </div>

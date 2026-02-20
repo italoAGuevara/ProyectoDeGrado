@@ -11,6 +11,9 @@ import { ReportsComponent } from './pages/reports/reports.component';
 import { JobReportComponent } from './pages/reports/job-report/job-report.component';
 import { DestinationExecutionsComponent } from './pages/reports/destination-executions/destination-executions.component';
 import { LogsReportComponent } from './pages/reports/logs-report/logs-report.component';
+import { AboutComponent } from './pages/about/about.component';
+import { AboutGeneralComponent } from './pages/about/about-general/about-general.component';
+import { AboutLibrariesComponent } from './pages/about/about-libraries/about-libraries.component';
 import { LoginComponent } from './pages/login/login.component';
 
 export const routes: Routes = [
@@ -32,6 +35,15 @@ export const routes: Routes = [
       { path: 'reportes/logs', component: LogsReportComponent },
       { path: 'reportes', component: ReportsComponent },
       { path: 'configuracion', component: SettingsComponent },
+      {
+        path: 'acerca-de',
+        component: AboutComponent,
+        children: [
+          { path: '', redirectTo: 'general', pathMatch: 'full' },
+          { path: 'general', component: AboutGeneralComponent },
+          { path: 'librerias', component: AboutLibrariesComponent },
+        ],
+      },
     ],
   },
 ];

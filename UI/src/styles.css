@@ -57,6 +57,76 @@ body {
   display: block;
   margin: 0 auto;
 }
+
+/* Botones de acción en tablas/cards (Editar, Eliminar, Pausar/Activar) */
+.btn-action {
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem !important;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.btn-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.btn-action:active {
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.btn-action svg {
+  margin: 0;
+}
+/* Editar: acento suave al hover */
+.btn-action-edit.btn-outline-primary:hover {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+.btn-action-edit.btn-outline-primary:active {
+  background: rgba(99, 102, 241, 0.18) !important;
+}
+/* Eliminar: rojo suave al hover */
+.btn-action-delete.btn-outline-danger:hover {
+  background: rgba(220, 38, 38, 0.1) !important;
+  border-color: #dc2626 !important;
+  color: #b91c1c !important;
+}
+.btn-action-delete.btn-outline-danger:active {
+  background: rgba(220, 38, 38, 0.18) !important;
+}
+/* Pausar/Activar: gris o verde suave al hover */
+.btn-action-toggle.btn-outline-secondary:hover {
+  background: rgba(107, 114, 128, 0.12) !important;
+  border-color: #6b7280 !important;
+  color: #374151 !important;
+}
+.btn-action-toggle.btn-outline-success:hover {
+  background: rgba(22, 163, 74, 0.12) !important;
+  border-color: #16a34a !important;
+  color: #15803d !important;
+}
+.btn-action-toggle:active {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+/* Ejecutar ahora: verde al hover */
+.btn-action-run.btn-outline-success:hover:not(:disabled) {
+  background: rgba(22, 163, 74, 0.14) !important;
+  border-color: #16a34a !important;
+  color: #15803d !important;
+}
+.btn-action-run.btn-outline-success:active:not(:disabled) {
+  background: rgba(22, 163, 74, 0.22) !important;
+}
+.btn-action-run:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-primary {
   background: var(--accent) !important;
   border-color: var(--accent) !important;
@@ -65,6 +135,293 @@ body {
 .btn-primary:hover {
   background: var(--accent-hover) !important;
   border-color: var(--accent-hover) !important;
+}
+
+/* Botón CTA principal (Nuevo trabajo, Nuevo script, Nuevo destino) */
+.btn-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+  border-radius: 12px;
+  border: none;
+  overflow: hidden;
+  color: #fff !important;
+  background: linear-gradient(145deg, #6d70f4 0%, var(--accent, #6366f1) 50%, #5558e3 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.15) inset,
+    0 2px 4px rgba(99, 102, 241, 0.25),
+    0 4px 12px rgba(99, 102, 241, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+.btn-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 45%);
+  pointer-events: none;
+}
+.btn-cta:hover {
+  color: #fff !important;
+  background: linear-gradient(145deg, #7c7ff6 0%, var(--accent-hover, #4f46e5) 50%, #4338ca 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.2) inset,
+    0 4px 12px rgba(99, 102, 241, 0.35),
+    0 8px 24px rgba(99, 102, 241, 0.25);
+  transform: translateY(-2px);
+}
+.btn-cta:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 2px 6px rgba(99, 102, 241, 0.3);
+}
+.btn-cta:focus-visible {
+  outline: none;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.15) inset,
+    0 0 0 3px rgba(99, 102, 241, 0.5),
+    0 4px 12px rgba(99, 102, 241, 0.2);
+}
+.btn-cta .btn-cta-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.btn-cta .btn-cta-icon svg {
+  display: block;
+  transition: transform 0.2s ease;
+}
+.btn-cta:hover .btn-cta-icon svg {
+  transform: rotate(90deg);
+}
+.btn-cta:active .btn-cta-icon svg {
+  transform: rotate(90deg) scale(0.9);
+}
+
+/* Botón CTA éxito (Ver reportes, etc.) - mismo estilo que .btn-cta en verde */
+.btn-cta-success {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+  border-radius: 12px;
+  border: none;
+  overflow: hidden;
+  color: #fff !important;
+  background: linear-gradient(145deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.15) inset,
+    0 2px 4px rgba(34, 197, 94, 0.25),
+    0 4px 12px rgba(34, 197, 94, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+.btn-cta-success::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 45%);
+  pointer-events: none;
+}
+.btn-cta-success:hover {
+  color: #fff !important;
+  background: linear-gradient(145deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.2) inset,
+    0 4px 12px rgba(34, 197, 94, 0.35),
+    0 8px 24px rgba(34, 197, 94, 0.25);
+  transform: translateY(-2px);
+}
+.btn-cta-success:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 2px 6px rgba(34, 197, 94, 0.3);
+}
+.btn-cta-success:focus-visible {
+  outline: none;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.15) inset,
+    0 0 0 3px rgba(34, 197, 94, 0.5),
+    0 4px 12px rgba(34, 197, 94, 0.2);
+}
+.btn-cta-success .btn-cta-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.btn-cta-success .btn-cta-icon svg {
+  display: block;
+  transition: transform 0.2s ease;
+}
+.btn-cta-success:hover .btn-cta-icon svg {
+  transform: rotate(90deg);
+}
+.btn-cta-success:active .btn-cta-icon svg {
+  transform: rotate(90deg) scale(0.9);
+}
+
+/* Botón CTA info (Logs, etc.) - mismo estilo en azul */
+.btn-cta-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+  border-radius: 12px;
+  border: none;
+  overflow: hidden;
+  color: #fff !important;
+  background: linear-gradient(145deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.15) inset,
+    0 2px 4px rgba(14, 165, 233, 0.25),
+    0 4px 12px rgba(14, 165, 233, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+.btn-cta-info::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 45%);
+  pointer-events: none;
+}
+.btn-cta-info:hover {
+  color: #fff !important;
+  background: linear-gradient(145deg, #38bdf8 0%, #0ea5e9 50%, #0284c7 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.2) inset,
+    0 4px 12px rgba(14, 165, 233, 0.35),
+    0 8px 24px rgba(14, 165, 233, 0.25);
+  transform: translateY(-2px);
+}
+.btn-cta-info:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 2px 6px rgba(14, 165, 233, 0.3);
+}
+.btn-cta-info:focus-visible {
+  outline: none;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.15) inset,
+    0 0 0 3px rgba(14, 165, 233, 0.5),
+    0 4px 12px rgba(14, 165, 233, 0.2);
+}
+.btn-cta-info .btn-cta-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.btn-cta-info .btn-cta-icon svg {
+  display: block;
+  transition: transform 0.2s ease;
+}
+.btn-cta-info:hover .btn-cta-icon svg {
+  transform: rotate(90deg);
+}
+.btn-cta-info:active .btn-cta-icon svg {
+  transform: rotate(90deg) scale(0.9);
+}
+
+/* Botones de modal: Cancelar y Guardar (Destinos, Scripts, etc.) */
+.btn-modal-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border-radius: 12px;
+  border: none;
+  color: #374151;
+  background: #f3f4f6;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.btn-modal-cancel:hover {
+  background: #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+.btn-modal-cancel:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-modal-save {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border-radius: 12px;
+  border: none;
+  color: #fff !important;
+  background: linear-gradient(145deg, #6d70f4 0%, var(--accent, #6366f1) 50%, #5558e3 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.15) inset,
+    0 2px 4px rgba(99, 102, 241, 0.25),
+    0 4px 12px rgba(99, 102, 241, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.btn-modal-save::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 45%);
+  pointer-events: none;
+}
+.btn-modal-save:hover {
+  background: linear-gradient(145deg, #7c7ff6 0%, var(--accent-hover, #4f46e5) 50%, #4338ca 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.2) inset,
+    0 4px 12px rgba(99, 102, 241, 0.35),
+    0 8px 24px rgba(99, 102, 241, 0.25);
+  transform: translateY(-2px);
+}
+.btn-modal-save:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+}
+.btn-modal-save .btn-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 /* Inputs y formularios */

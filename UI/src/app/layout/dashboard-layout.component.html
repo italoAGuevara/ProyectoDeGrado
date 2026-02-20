@@ -9,10 +9,15 @@
 
   <!-- Sidebar izquierda -->
   <aside class="sidebar" [class.is-open]="sidebarOpen()">
-    <div class="sidebar-brand">
+    <a
+      class="sidebar-brand"
+      routerLink="/"
+      (click)="closeSidebar()"
+      aria-label="Ir al inicio"
+    >
       <span class="sidebar-brand-icon">◇</span>
       <span class="sidebar-brand-text">Cloud Keep</span>
-    </div>
+    </a>
     <nav class="sidebar-nav">
       <a
         class="sidebar-link"
@@ -72,14 +77,24 @@
     </nav>
     <div class="sidebar-footer">
       <a
+        class="sidebar-link"
+        routerLink="/acerca-de"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+      >
+        <span class="sidebar-link-icon">ℹ</span>
+        Acerca de
+      </a>
+      <a
         class="sidebar-link sidebar-link-logout"
         routerLink="/login"
         (click)="closeSidebar()"
       >
-        <span class="sidebar-link-icon">⎋</span>
+        <span class="sidebar-link-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </span>
         Cerrar sesión
       </a>
-      <span class="sidebar-footer-text">S3 · Google Drive</span>
     </div>
   </aside>
 
@@ -96,6 +111,48 @@
         <span></span>
         <span></span>
       </button>
+      <div class="header-actions">
+        <div class="notifications-wrap">
+          <button
+            type="button"
+            class="btn-notifications"
+            (click)="toggleNotifications()"
+            [attr.aria-expanded]="notificationsOpen()"
+            aria-label="Ver notificaciones"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628.134 2.197.459 3.742.16.767.376 1.566.663 2.258h10.244c.287-.692.502-1.49.663-2.258C12.866 8.197 13 6.628 13 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1h12.44z"/>
+            </svg>
+            @if (unreadCount() > 0) {
+              <span class="notifications-badge" aria-hidden="true">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+            }
+          </button>
+          @if (notificationsOpen()) {
+            <div class="notifications-overlay" (click)="closeNotifications()" aria-hidden="true"></div>
+            <div class="notifications-panel" role="dialog" aria-label="Notificaciones">
+              <div class="notifications-panel-header">
+                <span class="fw-600">Notificaciones</span>
+              </div>
+              <div class="notifications-panel-body">
+                @for (n of notifications(); track n.id) {
+                  <button
+                    type="button"
+                    class="notification-item"
+                    [class.notification-item--unread]="!n.read"
+                    (click)="markAsRead(n)"
+                  >
+                    <div class="notification-item-title">{{ n.title }}</div>
+                    <div class="notification-item-text">{{ n.message }}</div>
+                    <div class="notification-item-date">{{ n.date }}</div>
+                  </button>
+                } @empty {
+                  <div class="notifications-empty">No hay notificaciones</div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
     </header>
     <main class="main-content">
       <router-outlet />

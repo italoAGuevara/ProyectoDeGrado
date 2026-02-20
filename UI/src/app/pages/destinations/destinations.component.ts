@@ -3,6 +3,7 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 type DestinationType = 's3' | 'google_drive';
+type S3ConfigMode = 'bucket_region' | 'credentials';
 
 interface Destination {
   id: string;
@@ -40,36 +41,123 @@ export class DestinationsComponent {
   editingDest = signal<Destination | null>(null);
   formName = '';
   formType: DestinationType = 's3';
+  formS3Mode: S3ConfigMode = 'bucket_region';
   formBucket = '';
   formRegion = 'us-east-1';
+  formAccessKeyId = '';
+  formSecretAccessKey = '';
   formFolderId = '';
+  /** Google Drive: Service Account (client_email del JSON de la cuenta de servicio) */
+  formGoogleServiceAccountEmail = '';
+  /** Google Drive: clave privada (private_key del JSON de la cuenta de servicio) */
+  formGooglePrivateKey = '';
+
+  testingConnection = signal(false);
+  testResult = signal<{ success: boolean; message: string } | null>(null);
 
   openCreate(): void {
     this.editingDest.set(null);
     this.formName = '';
     this.formType = 's3';
+    this.formS3Mode = 'bucket_region';
     this.formBucket = '';
     this.formRegion = 'us-east-1';
+    this.formAccessKeyId = '';
+    this.formSecretAccessKey = '';
     this.formFolderId = '';
+    this.formGoogleServiceAccountEmail = '';
+    this.formGooglePrivateKey = '';
     this.showModal.set(true);
+    this.testResult.set(null);
   }
 
   openEdit(d: Destination): void {
     this.editingDest.set(d);
     this.formName = d.name;
     this.formType = d.type;
-    this.formBucket = d.config['bucket'] ?? '';
-    this.formRegion = d.config['region'] ?? 'us-east-1';
-    this.formFolderId = d.config['folderId'] ?? '';
+    if (d.type === 's3') {
+      const hasCredentials = !!(d.config['accessKeyId'] ?? '').trim();
+      this.formS3Mode = hasCredentials ? 'credentials' : 'bucket_region';
+      this.formBucket = d.config['bucket'] ?? '';
+      this.formRegion = d.config['region'] ?? 'us-east-1';
+      this.formAccessKeyId = d.config['accessKeyId'] ?? '';
+      this.formSecretAccessKey = d.config['secretAccessKey'] ?? '';
+    } else {
+      this.formFolderId = d.config['folderId'] ?? '';
+      this.formGoogleServiceAccountEmail = d.config['serviceAccountEmail'] ?? '';
+      this.formGooglePrivateKey = d.config['privateKey'] ?? '';
+    }
     this.showModal.set(true);
+    this.testResult.set(null);
+  }
+
+  testConnection(): void {
+    this.testResult.set(null);
+    if (this.formType === 's3') {
+      if (this.formS3Mode === 'bucket_region') {
+        const bucket = this.formBucket?.trim();
+        const region = this.formRegion?.trim();
+        if (!bucket || !region) {
+          this.testResult.set({
+            success: false,
+            message: 'Completa Bucket y Región.',
+          });
+          return;
+        }
+      } else {
+        const accessKey = this.formAccessKeyId?.trim();
+        const secretKey = this.formSecretAccessKey?.trim();
+        if (!accessKey || !secretKey) {
+          this.testResult.set({
+            success: false,
+            message: 'Completa Access Key ID y Secret Access Key.',
+          });
+          return;
+        }
+      }
+    } else {
+      const folderId = this.formFolderId?.trim();
+      const email = this.formGoogleServiceAccountEmail?.trim();
+      const key = this.formGooglePrivateKey?.trim();
+      if (!folderId) {
+        this.testResult.set({ success: false, message: 'Completa el ID de carpeta.' });
+        return;
+      }
+      if (!email || !key) {
+        this.testResult.set({ success: false, message: 'Completa el correo de la Service Account y la clave privada.' });
+        return;
+      }
+    }
+    this.testingConnection.set(true);
+    // Simula llamada al backend; reemplazar por servicio real cuando exista
+    setTimeout(() => {
+      this.testingConnection.set(false);
+      if (this.formType === 's3') {
+        this.testResult.set({
+          success: true,
+          message: 'Conexión con S3 verificada.',
+        });
+      } else {
+        this.testResult.set({
+          success: true,
+          message: 'Conexión con Google Drive verificada.',
+        });
+      }
+    }, 1200);
   }
 
   save(): void {
     const edit = this.editingDest();
     const config: Record<string, string> =
       this.formType === 's3'
-        ? { bucket: this.formBucket, region: this.formRegion }
-        : { folderId: this.formFolderId };
+        ? this.formS3Mode === 'bucket_region'
+          ? { bucket: this.formBucket, region: this.formRegion }
+          : { accessKeyId: this.formAccessKeyId, secretAccessKey: this.formSecretAccessKey }
+        : {
+            folderId: this.formFolderId,
+            serviceAccountEmail: this.formGoogleServiceAccountEmail,
+            privateKey: this.formGooglePrivateKey,
+          };
 
     if (edit) {
       this.destinations.update((list) =>

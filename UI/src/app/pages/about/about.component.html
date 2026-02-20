@@ -1,0 +1,23 @@
+<div class="container-fluid px-0">
+  <h1 class="page-title mb-3">Acerca de</h1>
+
+  <nav class="about-nav mb-4">
+    <a
+      routerLink="/acerca-de/general"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="about-nav-link"
+    >
+      General
+    </a>
+    <a
+      routerLink="/acerca-de/librerias"
+      routerLinkActive="active"
+      class="about-nav-link"
+    >
+      Librerías
+    </a>
+  </nav>
+
+  <router-outlet />
+</div>

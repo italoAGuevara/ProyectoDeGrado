@@ -1,0 +1,24 @@
+/* Navegación entre subpáginas de Acerca de */
+.about-nav {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+.about-nav-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-muted, #6b7280);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.about-nav-link:hover {
+  color: var(--accent, #6366f1);
+  background: rgba(99, 102, 241, 0.08);
+}
+.about-nav-link.active {
+  color: var(--accent, #6366f1);
+  background: rgba(99, 102, 241, 0.12);
+}

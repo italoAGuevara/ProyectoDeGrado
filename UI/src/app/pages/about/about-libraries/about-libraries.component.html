@@ -1,0 +1,27 @@
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="app-card card border-0">
+      <div class="card-body p-4 p-lg-5">
+        <p class="text-muted small mb-3">Principales dependencias del proyecto.</p>
+        <div class="table-responsive">
+          <table class="table table-sm table-modern mb-0">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th class="text-end">Versión</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (lib of libraries; track lib.name) {
+                <tr>
+                  <td><code class="small">{{ lib.name }}</code></td>
+                  <td class="text-end text-muted small">{{ lib.version }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -13,6 +13,8 @@ export class LoginComponent {
     private router = inject(Router);
 
     password = '';
+    showPassword = false;
+    rememberPassword = false;
     error = '';
     loading = false;
 
