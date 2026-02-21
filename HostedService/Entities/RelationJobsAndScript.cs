@@ -11,5 +11,11 @@ namespace HostedService.Entities
         public ScriptConfiguration? Script { get; set; }
 
         public int ExecutionOrder { get; set; }
+
+        /// <summary>Ejecutar como script pre-backup.</summary>
+        public bool Pre { get; set; }
+
+        /// <summary>Ejecutar como script post-backup.</summary>
+        public bool Post { get; set; }
     }
 }

@@ -59,7 +59,6 @@ export class JobWizardComponent implements OnInit {
     formDescription = '';
     formEnabled = true;
     formDestination = '';
-    formSourcePath = '';
 
     // Filters
     excludeHidden = false;
@@ -74,7 +73,6 @@ export class JobWizardComponent implements OnInit {
         console.log('Guardando trabajo...', {
             name: this.formName,
             description: this.formDescription,
-            source: this.formSourcePath,
             destination: this.formDestination,
             schedule: this.formSchedule,
             scripts: this.formScripts,

@@ -9,7 +9,6 @@ export interface Job {
   id: string;
   name: string;
   description?: string;
-  sourcePath: string;
   destinationName: string;
   schedule: string;
   enabled: boolean;
@@ -31,7 +30,6 @@ export class JobsService {
       id: '1',
       name: 'Backup diario documentos',
       description: 'Respaldo de mis documentos importantes',
-      sourcePath: 'C:\\Docs',
       destinationName: 'S3 principal',
       schedule: '0 2 * * *',
       enabled: true,

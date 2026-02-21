@@ -23,7 +23,7 @@ export class LoginComponent {
     loading = false;
 
     constructor() {
-        if (this.authService.isLoggedIn()) {
+        if (!this.authService.requireAuth() || this.authService.isLoggedIn()) {
             this.router.navigate(['/']);
         }
     }

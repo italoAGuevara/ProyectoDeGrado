@@ -5,6 +5,7 @@ const AUTH_TOKEN_KEY = 'cloudkeep_token';
 
 export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  
   if (token) {
     req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
   }

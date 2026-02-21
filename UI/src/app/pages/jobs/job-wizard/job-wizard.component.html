@@ -57,14 +57,7 @@
       <!-- Paso 3: Fuente -->
       @if (currentStep === 2) {
         <h4 class="mb-3">Fuente de Datos</h4>
-        <div class="mb-3">
-          <label class="form-label fw-500">Ruta de origen</label>
-          <div class="input-group">
-            <input type="text" class="form-control" [(ngModel)]="formSourcePath" placeholder="C:\Carpeta\Datos" />
-            <button class="btn btn-outline-secondary" type="button">Examinar...</button>
-          </div>
-          <div class="form-text">Carpeta o archivo que deseas respaldar.</div>
-        </div>
+        <p class="text-muted small">Selecciona el origen del respaldo desde la configuración del trabajo (orígenes disponibles).</p>
 
         <h5 class="mt-4 mb-3">Filtros y Exclusiones</h5>
         

@@ -10,6 +10,7 @@ namespace API
         public DbSet<User> Users => Set<User>();
         public DbSet<FileMetadata> FileMetadatas => Set<FileMetadata>();
         public DbSet<HistoryBackupExecutions> HistoryBackupExecutions => Set<HistoryBackupExecutions>();
+        public DbSet<Origen> Origenes => Set<Origen>();
         public DbSet<RelationJobsAndScript> relationJobsAndScripts => Set<RelationJobsAndScript>();
         public DbSet<ScriptConfiguration> ScriptConfigurations => Set<ScriptConfiguration>();
         public DbSet<StorageProvider> StorageProviders => Set<StorageProvider>();
@@ -18,6 +19,14 @@ namespace API
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<BackupJob>(entity =>
+            {
+                entity.HasOne(b => b.Origen)
+                      .WithMany()
+                      .HasForeignKey(b => b.OrigenId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
 
             modelBuilder.Entity<RelationJobsAndScript>(entity =>
             {

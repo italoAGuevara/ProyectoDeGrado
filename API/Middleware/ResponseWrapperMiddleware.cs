@@ -1,4 +1,4 @@
-﻿using API.Commons;
+using API.Commons;
 using System.Text.Json;
 
 namespace API.Middleware
@@ -21,7 +21,12 @@ namespace API.Middleware
 
             await _next(context);
                         
-            if ((context.Response.StatusCode >= 200 && context.Response.StatusCode < 300)
+            if (context.Response.StatusCode == 204)
+            {
+                // 204 No Content no puede tener cuerpo
+                context.Response.Body = originalBodyStream;
+            }
+            else if ((context.Response.StatusCode >= 200 && context.Response.StatusCode < 300)
                 && context.Response.ContentType != "text/html")
             {
                 context.Response.ContentType = "application/json";
@@ -49,7 +54,7 @@ namespace API.Middleware
                 });
                                 
                 var bytes = System.Text.Encoding.UTF8.GetBytes(jsonResponse);
-                await originalBodyStream.WriteAsync(bytes, 0, bytes.Length);
+                await originalBodyStream.WriteAsync(bytes);
             }
             else
             {

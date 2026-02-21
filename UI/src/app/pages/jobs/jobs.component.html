@@ -16,7 +16,7 @@
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Origen</th>
+              <th>Descripción</th>
               <th>Destino</th>
               <th>Programación</th>
               <th>Scripts</th>
@@ -28,7 +28,7 @@
             @for (job of paginatedJobs(); track job.id) {
               <tr>
                 <td class="fw-500">{{ job.name }}</td>
-                <td><code class="small bg-light px-2 py-1 rounded">{{ job.sourcePath }}</code></td>
+                <td class="small text-muted">{{ job.description || '—' }}</td>
                 <td>{{ job.destinationName }}</td>
                 <td><span class="badge bg-light text-dark">{{ scheduleLabel(job.schedule) }}</span></td>
                 <td>
