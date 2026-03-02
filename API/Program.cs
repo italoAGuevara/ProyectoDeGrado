@@ -1,6 +1,7 @@
 using API;
 using API.Features.Login;
 using API.Features.Login.Entities;
+using API.Features.Scripts;
 using API.Features.Settings;
 using API.Middleware;
 using HostedService;
@@ -126,9 +127,9 @@ using (var scope = app.Services.CreateScope())
     if (!db.ScriptConfigurations.Any())
     {
         db.ScriptConfigurations.AddRange(
-            new ScriptConfiguration { Name = "Notificar inicio", ScriptPath = "C:\\Scripts\\notify_start.ps1", Arguments = "", Trigger = ScriptTrigger.PreBackup, StopOnFailure = false, TimeoutMinutes = 2 },
-            new ScriptConfiguration { Name = "Limpiar temporales", ScriptPath = "C:\\Scripts\\clean_temp.ps1", Arguments = "", Trigger = ScriptTrigger.PreBackup, StopOnFailure = false, TimeoutMinutes = 5 },
-            new ScriptConfiguration { Name = "Notificar fin", ScriptPath = "C:\\Scripts\\notify_end.ps1", Arguments = "", Trigger = ScriptTrigger.PostBackup, StopOnFailure = false, TimeoutMinutes = 2 }
+            new ScriptConfiguration { Name = "Notificar inicio", ScriptPath = "C:\\Scripts\\notify_start.ps1", Arguments = "", Tipo = ScriptType.Ps1 },
+            new ScriptConfiguration { Name = "Limpiar temporales", ScriptPath = "C:\\Scripts\\clean_temp.ps1", Arguments = "", Tipo = ScriptType.Ps1 },
+            new ScriptConfiguration { Name = "Notificar fin", ScriptPath = "C:\\Scripts\\notify_end.ps1", Arguments = "", Tipo = ScriptType.Ps1 }
         );
         db.SaveChanges();
     }
@@ -191,6 +192,7 @@ app.MapLogin();
 app.MapValidateJwt();
 app.MapChangePassword();
 app.MapSettings();
+app.MapScripts();
 
 app.Run();
 

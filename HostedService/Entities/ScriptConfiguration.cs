@@ -1,4 +1,4 @@
-﻿using HostedService.Enums;
+using HostedService.Enums;
 
 namespace HostedService.Entities
 {
@@ -9,14 +9,9 @@ namespace HostedService.Entities
         public string? ScriptPath { get; set; }
         public string? Arguments { get; set; }
 
-        public ScriptTrigger Trigger { get; set; }
+        /// <summary>Tipo de script: .ps1, .bat o .js</summary>
+        public ScriptType Tipo { get; set; }                
 
-        public bool StopOnFailure { get; set; }
-
-        public int TimeoutMinutes { get; set; } = 5;
-
-        public List<RelationJobsAndScript>? Jobs { get; set; }
-
-        public override string ToString() => $"[{Trigger}] {Name}";
+        public List<RelationJobsAndScript>? Jobs { get; set; }                
     }
 }

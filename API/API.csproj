@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <Folder Include="Features\IsTokenValid\Entities\" />
+    <Folder Include="Features\Scripts\" />
   </ItemGroup>
 
   <ItemGroup>
