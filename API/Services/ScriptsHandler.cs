@@ -1,9 +1,9 @@
-using API;
+using API.DTOs;
 using API.Exceptions;
 using HostedService.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace API.Features.Scripts
+namespace API.Services
 {
     public class ScriptsHandler
     {

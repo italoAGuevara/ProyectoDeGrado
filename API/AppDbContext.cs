@@ -1,4 +1,4 @@
-using API.Features.Login.Entities;
+using API.Entitys;
 using HostedService.Entities;
 using Microsoft.EntityFrameworkCore;
 

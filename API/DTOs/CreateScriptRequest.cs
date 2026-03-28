@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using HostedService.Enums;
 
-namespace API.Features.Scripts
+namespace API.DTOs
 {
     //public record CreateScriptRequest(
     //    [property: JsonPropertyName("name")] string Name,

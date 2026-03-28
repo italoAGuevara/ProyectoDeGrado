@@ -25,15 +25,26 @@ namespace HostedService
 
                     // here starts main logic of the robot
                     await Process();
-
+                }
+                catch (TaskCanceledException)
+                {
+                    // Log as information instead of error when the task is canceled
+                    _logger.LogInformation("Robot task was canceled.");
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Robot error executing task in background.");
                 }
 
-                
-                await Task.Delay(_intervalo, stoppingToken);
+                try
+                {
+                    await Task.Delay(_intervalo, stoppingToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Handle cancellation during delay
+                    _logger.LogInformation("Robot delay was canceled.");
+                }
             }
         }
 

@@ -1,4 +1,4 @@
-namespace API.Features.Login.Entities
+namespace API.Entitys
 {
     public class User
     {

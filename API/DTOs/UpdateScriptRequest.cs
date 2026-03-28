@@ -1,12 +1,11 @@
 using System.Text.Json.Serialization;
 using HostedService.Enums;
 
-namespace API.Features.Scripts
+namespace API.DTOs
 {
-    public record ScriptResponse(
-        [property: JsonPropertyName("id")] int Id,
+    public record UpdateScriptRequest(
         [property: JsonPropertyName("name")] string? Name,
         [property: JsonPropertyName("scriptPath")] string? ScriptPath,
         [property: JsonPropertyName("arguments")] string? Arguments,
-        [property: JsonPropertyName("tipo")] int Tipo);
+        [property: JsonPropertyName("tipo")] ScriptType? Tipo);
 }

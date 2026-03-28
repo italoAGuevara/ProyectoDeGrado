@@ -1,8 +1,11 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace API.Features.Login
+namespace API.DTOs
 {
+    public record class LoginRequest(string password);
+
     public record ChangePasswordRequest(
         [property: JsonPropertyName("currentPassword")] string CurrentPassword,
         [property: JsonPropertyName("newPassword")] string NewPassword);
+
 }

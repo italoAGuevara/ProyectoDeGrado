@@ -1,9 +1,9 @@
 using API;
-using API.Features.Login;
-using API.Features.Login.Entities;
-using API.Features.Scripts;
-using API.Features.Settings;
+using API.Endpoints;
+using API.Entitys;
 using API.Middleware;
+using API.Services.Interfaces;
+using API.Services.Services;
 using HostedService;
 using HostedService.Entities;
 using HostedService.Enums;
@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using Serilog;
 using System.Reflection;
 using System.Text;
@@ -80,6 +81,8 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddHostedService<Robot>();
+
+builder.Services.AddTransient<ILogin, LoginService>();
 
 var app = builder.Build();
 
@@ -186,12 +189,10 @@ app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(); // Accessible at /scalar/v1
 }
 
-app.MapLogin();
-app.MapValidateJwt();
-app.MapChangePassword();
-app.MapSettings();
+app.MapAuthEndpoint();
 app.MapScripts();
 
 app.Run();

@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Builder;
+using API.DTOs;
+using API.Services;
 
-namespace API.Features.Scripts
+namespace API.Endpoints
 {
     public static class MapScriptsExtensions
     {
