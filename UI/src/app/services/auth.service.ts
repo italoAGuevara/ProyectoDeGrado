@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, catchError, map, tap } from 'rxjs';
 
 const AUTH_TOKEN_KEY = 'cloudkeep_token';
-const API_LOGIN = '/api/login';
-const API_CHANGE_PASSWORD = '/api/user/change-password';
+const API_LOGIN = '/api/auth/login';
+const API_CHANGE_PASSWORD = '/api/auth/change-password';
 const API_REQUIRE_AUTH_GET = '/api/settings/require-auth';
 const API_REQUIRE_AUTH_PUT = '/api/settings/require-auth';
 

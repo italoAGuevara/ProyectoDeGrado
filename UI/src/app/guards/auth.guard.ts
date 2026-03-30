@@ -6,6 +6,8 @@ export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
+  //return true;
+
   if (auth.requireAuth() === false) {
     return true;
   }

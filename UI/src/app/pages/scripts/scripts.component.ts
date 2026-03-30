@@ -1,7 +1,8 @@
 import { NgClass } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CopyScript, ScriptsService, ScriptType, ScriptWhen } from '../../services/scripts.service';
+import { CopyScript, ScriptsService, ScriptType } from '../../services/scripts.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-scripts',
@@ -9,8 +10,9 @@ import { CopyScript, ScriptsService, ScriptType, ScriptWhen } from '../../servic
   imports: [FormsModule, NgClass],
   templateUrl: './scripts.component.html',
 })
-export class ScriptsComponent {
+export class ScriptsComponent implements OnInit {
   private scriptsService = inject(ScriptsService);
+  private toast = inject(ToastService);
 
   readonly allowedTypes: { value: ScriptType; label: string }[] = [
     { value: 'ps1', label: 'PowerShell (.ps1)' },
@@ -19,25 +21,26 @@ export class ScriptsComponent {
   ];
 
   scripts = this.scriptsService.scripts;
+  loading = this.scriptsService.loading;
 
   showModal = signal(false);
   editingScript = signal<CopyScript | null>(null);
   formName = '';
-  formWhen: ScriptWhen = 'pre';
   formScriptType: ScriptType = 'ps1';
   formScriptPath = '';
   formArguments = '';
-  formEnabled = true;
   formPathError = signal<string | null>(null);
+
+  ngOnInit(): void {
+    this.scriptsService.loadAll();
+  }
 
   openCreate(): void {
     this.editingScript.set(null);
     this.formName = '';
-    this.formWhen = 'pre';
     this.formScriptType = 'ps1';
     this.formScriptPath = '';
     this.formArguments = '';
-    this.formEnabled = true;
     this.formPathError.set(null);
     this.showModal.set(true);
   }
@@ -48,7 +51,6 @@ export class ScriptsComponent {
     this.formScriptType = script.scriptType;
     this.formScriptPath = script.scriptPath;
     this.formArguments = script.arguments;
-    this.formEnabled = script.enabled;
     this.formPathError.set(null);
     this.showModal.set(true);
   }
@@ -69,23 +71,33 @@ export class ScriptsComponent {
   }
 
   save(): void {
+    if (!this.formName.trim()) {
+      this.toast.show('El nombre es obligatorio.', 'warning');
+      return;
+    }
     if (!this.validatePath()) return;
+
     const edit = this.editingScript();
     const script: CopyScript = {
-      id: edit?.id ?? String(Date.now()),
-      name: this.formName,
+      id: edit?.id ?? '',
+      name: this.formName.trim(),
       scriptType: this.formScriptType,
       scriptPath: this.formScriptPath.trim(),
       arguments: this.formArguments,
-      enabled: this.formEnabled,
+      enabled: true,
     };
 
     if (edit) {
-      this.scriptsService.updateScript(script);
+      this.scriptsService.update(script).subscribe({
+        next: () => this.closeModal(),
+        error: () => {},
+      });
     } else {
-      this.scriptsService.addScript(script);
+      this.scriptsService.create(script).subscribe({
+        next: () => this.closeModal(),
+        error: () => {},
+      });
     }
-    this.closeModal();
   }
 
   closeModal(): void {
@@ -94,17 +106,8 @@ export class ScriptsComponent {
   }
 
   deleteScript(script: CopyScript): void {
-    if (confirm(`¿Eliminar script "${script.name}"?`)) {
-      this.scriptsService.deleteScript(script.id);
-    }
-  }
-
-  whenLabel(when: ScriptWhen): string {
-    return when === 'pre' ? 'Pre-copiado' : 'Post-copiado';
-  }
-
-  whenBadgeClass(when: ScriptWhen): string {
-    return when === 'pre' ? 'bg-primary' : 'bg-info text-dark';
+    if (!confirm(`¿Eliminar script "${script.name}"?`)) return;
+    this.scriptsService.deleteById(script.id).subscribe({ error: () => {} });
   }
 
   scriptTypeLabel(type: ScriptType): string {

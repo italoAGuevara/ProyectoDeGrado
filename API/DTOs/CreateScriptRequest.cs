@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
-using HostedService.Enums;
 
-namespace API.DTOs
-{
+namespace API.DTOs;
 
-    public record CreateScriptRequest(string Nombre, string ScriptPath, string Arguments, string Tipo);
-}
+public record CreateScriptRequest(
+    [property: JsonPropertyName("nombre")] string Nombre,
+    [property: JsonPropertyName("scriptPath")] string ScriptPath,
+    [property: JsonPropertyName("arguments")] string Arguments,
+    [property: JsonPropertyName("tipo")] string Tipo);
