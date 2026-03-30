@@ -12,12 +12,12 @@ public class AppDbContext : DbContext
 
     public DbSet<Trabajo> Trabajos => Set<Trabajo>();
     public DbSet<TrabajosOrigenDestino> TrabajosOrigenDestinos => Set<TrabajosOrigenDestino>();
+    public DbSet<TrabajoScripts> TrabajosScripts => Set<TrabajoScripts>();
     public DbSet<User> Users => Set<User>();
     public DbSet<FileMetadata> FileMetadatas => Set<FileMetadata>();
     public DbSet<HistoryBackupExecutions> HistoryBackupExecutions => Set<HistoryBackupExecutions>();
     public DbSet<Origen> Origenes => Set<Origen>();
     public DbSet<Destino> Destinos => Set<Destino>();
-    public DbSet<RelationJobsAndScript> relationJobsAndScripts => Set<RelationJobsAndScript>();
     public DbSet<ScriptConfiguration> ScriptConfigurations => Set<ScriptConfiguration>();
     public DbSet<StorageProvider> StorageProviders => Set<StorageProvider>();
     public DbSet<UserStorages> UserStorages => Set<UserStorages>();
@@ -41,11 +41,31 @@ public class AppDbContext : DbContext
             entity.HasIndex(t => new { t.OrigenId, t.DestinoId }).IsUnique();
         });
 
+        modelBuilder.Entity<TrabajoScripts>(entity =>
+        {
+            entity.ToTable("TrabajosScripts");
+
+            entity.HasOne(ts => ts.ScriptPre)
+                .WithMany(s => s.TrabajoScriptsComoPre)
+                .HasForeignKey(ts => ts.ScriptPreId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(ts => ts.ScriptPost)
+                .WithMany(s => s.TrabajoScriptsComoPost)
+                .HasForeignKey(ts => ts.ScriptPostId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<Trabajo>(entity =>
         {
             entity.HasOne(t => t.TrabajosOrigenDestino)
                 .WithMany(p => p.Trabajos)
                 .HasForeignKey(t => t.TrabajosOrigenDestinoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.TrabajosScripts)
+                .WithMany(ts => ts.Trabajos)
+                .HasForeignKey(t => t.TrabajosScriptsId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -57,21 +77,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Destino>(entity =>
         {
             entity.HasIndex(d => d.Nombre).IsUnique();
-        });
-
-        modelBuilder.Entity<RelationJobsAndScript>(entity =>
-        {
-            entity.HasKey(rj => new { rj.ScriptId, rj.JobId });
-
-            entity.HasOne(rj => rj.Trabajo)
-                .WithMany(t => t.Scripts)
-                .HasForeignKey(rj => rj.JobId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(rj => rj.Script)
-                .WithMany(s => s.Jobs)
-                .HasForeignKey(rj => rj.ScriptId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ScriptConfiguration>(entity =>

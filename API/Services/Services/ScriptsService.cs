@@ -69,6 +69,12 @@ namespace API.Services.Services
         {
             var entity = await _context.ScriptConfigurations.FirstOrDefaultAsync(s => s.Id == id);
             if (entity is null) return false;
+
+            var enUso = await _context.TrabajosScripts.AnyAsync(ts =>
+                ts.ScriptPreId == id || ts.ScriptPostId == id);
+            if (enUso)
+                throw new ConflictException($"El script '{id}' está asignado como pre o post en uno o más trabajos.");
+
             _context.ScriptConfigurations.Remove(entity);
             await _context.SaveChangesAsync();
             return true;

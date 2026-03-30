@@ -42,32 +42,32 @@ public static class TrabajoDemoSeed
         if (scriptPre is null || scriptPost is null)
             return;
 
-        var job = new Trabajo
+        var bundle = db.TrabajosScripts.FirstOrDefault(ts =>
+            ts.ScriptPreId == scriptPre.Id
+            && ts.ScriptPostId == scriptPost.Id
+            && !ts.PreDetenerEnFallo
+            && !ts.PostDetenerEnFallo);
+        if (bundle is null)
+        {
+            bundle = new TrabajoScripts
+            {
+                ScriptPreId = scriptPre.Id,
+                ScriptPostId = scriptPost.Id,
+                PreDetenerEnFallo = false,
+                PostDetenerEnFallo = false
+            };
+            db.TrabajosScripts.Add(bundle);
+            db.SaveChanges();
+        }
+
+        db.Trabajos.Add(new Trabajo
         {
             Nombre = "Backup diario documentos",
             Descripcion = "Respaldo de la carpeta Documentos al destino configurado.",
             TrabajosOrigenDestinoId = link.Id,
+            TrabajosScriptsId = bundle.Id,
             CronExpression = "0 2 * * *",
             Activo = true
-        };
-        db.Trabajos.Add(job);
-        db.SaveChanges();
-
-        db.relationJobsAndScripts.Add(new RelationJobsAndScript
-        {
-            JobId = job.Id,
-            ScriptId = scriptPre.Id,
-            ExecutionOrder = 1,
-            Pre = true,
-            Post = false
-        });
-        db.relationJobsAndScripts.Add(new RelationJobsAndScript
-        {
-            JobId = job.Id,
-            ScriptId = scriptPost.Id,
-            ExecutionOrder = 2,
-            Pre = false,
-            Post = true
         });
         db.SaveChanges();
     }

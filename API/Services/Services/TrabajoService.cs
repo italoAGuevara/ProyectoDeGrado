@@ -18,6 +18,7 @@ public class TrabajoService : ITrabajoService
         var list = await _context.Trabajos
             .AsNoTracking()
             .Include(t => t.TrabajosOrigenDestino)
+            .Include(t => t.TrabajosScripts)
             .OrderBy(t => t.Nombre)
             .ToListAsync();
         return list.Select(MapToResponse).OrderBy(x => x.Id);
@@ -28,6 +29,7 @@ public class TrabajoService : ITrabajoService
         var entity = await _context.Trabajos
             .AsNoTracking()
             .Include(t => t.TrabajosOrigenDestino)
+            .Include(t => t.TrabajosScripts)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (entity is null)
@@ -44,14 +46,22 @@ public class TrabajoService : ITrabajoService
 
         await EnsureOrigenExistsAsync(request.OrigenId);
         await EnsureDestinoExistsAsync(request.DestinoId);
+        await EnsureScriptExistsAsync(request.ScriptPreId);
+        await EnsureScriptExistsAsync(request.ScriptPostId);
 
         var linkId = await GetOrCreateTrabajosOrigenDestinoIdAsync(request.OrigenId, request.DestinoId);
+        var scriptsId = await GetOrCreateTrabajoScriptsIdAsync(
+            request.ScriptPreId,
+            request.ScriptPostId,
+            request.PreDetenerEnFallo ?? false,
+            request.PostDetenerEnFallo ?? false);
 
         var entity = new Trabajo
         {
             Nombre = request.Nombre.Trim(),
             Descripcion = request.Descripcion.Trim(),
             TrabajosOrigenDestinoId = linkId,
+            TrabajosScriptsId = scriptsId,
             CronExpression = request.CronExpression.Trim(),
             Activo = request.Activo ?? true
         };
@@ -59,6 +69,7 @@ public class TrabajoService : ITrabajoService
         await _context.SaveChangesAsync();
 
         await _context.Entry(entity).Reference(t => t.TrabajosOrigenDestino).LoadAsync();
+        await _context.Entry(entity).Reference(t => t.TrabajosScripts).LoadAsync();
         return MapToResponse(entity);
     }
 
@@ -66,6 +77,7 @@ public class TrabajoService : ITrabajoService
     {
         var entity = await _context.Trabajos
             .Include(t => t.TrabajosOrigenDestino)
+            .Include(t => t.TrabajosScripts)
             .FirstOrDefaultAsync(t => t.Id == id);
         if (entity is null) return null;
 
@@ -107,6 +119,28 @@ public class TrabajoService : ITrabajoService
             await _context.Entry(entity).Reference(t => t.TrabajosOrigenDestino).LoadAsync();
         }
 
+        var changeScripts = request.ScriptPreId is not null
+            || request.ScriptPostId is not null
+            || request.PreDetenerEnFallo is not null
+            || request.PostDetenerEnFallo is not null;
+        if (changeScripts)
+        {
+            if (request.ScriptPreId is null || request.ScriptPostId is null)
+                throw new BadRequestException("scriptPreId y scriptPostId deben enviarse juntos para cambiar los scripts.");
+
+            await EnsureScriptExistsAsync(request.ScriptPreId.Value);
+            await EnsureScriptExistsAsync(request.ScriptPostId.Value);
+
+            var preStop = request.PreDetenerEnFallo ?? entity.TrabajosScripts.PreDetenerEnFallo;
+            var postStop = request.PostDetenerEnFallo ?? entity.TrabajosScripts.PostDetenerEnFallo;
+            entity.TrabajosScriptsId = await GetOrCreateTrabajoScriptsIdAsync(
+                request.ScriptPreId.Value,
+                request.ScriptPostId.Value,
+                preStop,
+                postStop);
+            await _context.Entry(entity).Reference(t => t.TrabajosScripts).LoadAsync();
+        }
+
         entity.FechaModificacion = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         return MapToResponse(entity);
@@ -124,6 +158,7 @@ public class TrabajoService : ITrabajoService
     private static TrabajoResponse MapToResponse(Trabajo t)
     {
         var p = t.TrabajosOrigenDestino;
+        var s = t.TrabajosScripts;
         return new TrabajoResponse(
             t.Id,
             t.Nombre,
@@ -131,6 +166,11 @@ public class TrabajoService : ITrabajoService
             t.TrabajosOrigenDestinoId,
             p.OrigenId,
             p.DestinoId,
+            t.TrabajosScriptsId,
+            s.ScriptPreId,
+            s.ScriptPostId,
+            s.PreDetenerEnFallo,
+            s.PostDetenerEnFallo,
             t.CronExpression,
             t.Activo,
             t.Procesando,
@@ -153,6 +193,29 @@ public class TrabajoService : ITrabajoService
         return link.Id;
     }
 
+    private async Task<int> GetOrCreateTrabajoScriptsIdAsync(int scriptPreId, int scriptPostId, bool preDetener, bool postDetener)
+    {
+        var existing = await _context.TrabajosScripts
+            .FirstOrDefaultAsync(x =>
+                x.ScriptPreId == scriptPreId
+                && x.ScriptPostId == scriptPostId
+                && x.PreDetenerEnFallo == preDetener
+                && x.PostDetenerEnFallo == postDetener);
+        if (existing is not null)
+            return existing.Id;
+
+        var row = new TrabajoScripts
+        {
+            ScriptPreId = scriptPreId,
+            ScriptPostId = scriptPostId,
+            PreDetenerEnFallo = preDetener,
+            PostDetenerEnFallo = postDetener
+        };
+        _context.TrabajosScripts.Add(row);
+        await _context.SaveChangesAsync();
+        return row.Id;
+    }
+
     private async Task EnsureOrigenExistsAsync(int id)
     {
         if (!await _context.Origenes.AnyAsync(o => o.Id == id))
@@ -163,6 +226,12 @@ public class TrabajoService : ITrabajoService
     {
         if (!await _context.Destinos.AnyAsync(d => d.Id == id))
             throw new BadRequestException($"No existe un destino con Id '{id}'.");
+    }
+
+    private async Task EnsureScriptExistsAsync(int id)
+    {
+        if (!await _context.ScriptConfigurations.AnyAsync(s => s.Id == id))
+            throw new BadRequestException($"No existe un script con Id '{id}'.");
     }
 
     private static void ValidateRequired(string value, string fieldName)

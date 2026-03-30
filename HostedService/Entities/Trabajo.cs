@@ -6,6 +6,7 @@ public class Trabajo
     public string Nombre { get; set; } = string.Empty;
     public string Descripcion { get; set; } = string.Empty;
     public int TrabajosOrigenDestinoId { get; set; }
+    public int TrabajosScriptsId { get; set; }
     public string CronExpression { get; set; } = string.Empty;
     public bool Activo { get; set; } = true;
     public bool Procesando { get; set; }
@@ -14,5 +15,5 @@ public class Trabajo
     public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
 
     public TrabajosOrigenDestino TrabajosOrigenDestino { get; set; } = null!;
-    public List<RelationJobsAndScript>? Scripts { get; set; }
+    public TrabajoScripts TrabajosScripts { get; set; } = null!;
 }
