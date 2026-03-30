@@ -1,3 +1,4 @@
+using API.Audit;
 using API.DTOs;
 using API.Exceptions;
 using API.Services.Interfaces;
@@ -10,8 +11,13 @@ namespace API.Services.Services;
 public class OrigenService : IOrigenService
 {
     private readonly AppDbContext _context;
+    private readonly ILogAccionesUsuarioWriter _logAcciones;
 
-    public OrigenService(AppDbContext context) => _context = context;
+    public OrigenService(AppDbContext context, ILogAccionesUsuarioWriter logAcciones)
+    {
+        _context = context;
+        _logAcciones = logAcciones;
+    }
 
     public async Task<IEnumerable<OrigenResponse>> GetAll()
     {
@@ -48,6 +54,7 @@ public class OrigenService : IOrigenService
         };
         _context.Origenes.Add(entity);
         await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Origen, AccionLog.Create, null, SnapshotOrigen(entity));
         return MapToResponse(entity);
     }
 
@@ -55,6 +62,8 @@ public class OrigenService : IOrigenService
     {
         var entity = await _context.Origenes.FirstOrDefaultAsync(o => o.Id == id);
         if (entity is null) return null;
+
+        var antes = SnapshotOrigen(entity);
 
         if (request.Nombre is not null)
         {
@@ -78,6 +87,7 @@ public class OrigenService : IOrigenService
         entity.FiltrosExclusiones = request.FiltrosExclusiones;
 
         await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Origen, AccionLog.Update, antes, SnapshotOrigen(entity));
         return MapToResponse(entity);
     }
 
@@ -85,10 +95,24 @@ public class OrigenService : IOrigenService
     {
         var entity = await _context.Origenes.FirstOrDefaultAsync(o => o.Id == id);
         if (entity is null) return false;
+        var antes = SnapshotOrigen(entity);
         _context.Origenes.Remove(entity);
         await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Origen, AccionLog.Delete, antes, null);
         return true;
     }
+
+    private static object SnapshotOrigen(Origen o) => new
+    {
+        o.Id,
+        o.Nombre,
+        o.Ruta,
+        o.Descripcion,
+        o.TamanoMaximo,
+        o.FiltrosExclusiones,
+        o.FechaCreacion,
+        o.FechaModificacion
+    };
 
     private static OrigenResponse MapToResponse(Origen o) => new(
         o.Id,

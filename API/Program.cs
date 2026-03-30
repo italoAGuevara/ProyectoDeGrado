@@ -51,6 +51,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ILogAccionesUsuarioWriter, LogAccionesUsuarioWriter>();
+builder.Services.AddScoped<ILogAccionesUsuarioQueryService, LogAccionesUsuarioQueryService>();
+
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<IDestinoCredentialProtector, DestinoCredentialProtector>();
 
@@ -135,6 +139,7 @@ app.MapScripts();
 app.MapOrigenes();
 app.MapDestinos();
 app.MapTrabajos();
+app.MapLogAccionesUsuario();
 
 try
 {

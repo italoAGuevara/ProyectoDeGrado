@@ -1,3 +1,4 @@
+using API.Audit;
 using API.DTOs;
 using API.Exceptions;
 using API.Services.Interfaces;
@@ -10,8 +11,13 @@ namespace API.Services.Services;
 public class TrabajoService : ITrabajoService
 {
     private readonly AppDbContext _context;
+    private readonly ILogAccionesUsuarioWriter _logAcciones;
 
-    public TrabajoService(AppDbContext context) => _context = context;
+    public TrabajoService(AppDbContext context, ILogAccionesUsuarioWriter logAcciones)
+    {
+        _context = context;
+        _logAcciones = logAcciones;
+    }
 
     public async Task<IEnumerable<TrabajoResponse>> GetAll()
     {
@@ -70,6 +76,7 @@ public class TrabajoService : ITrabajoService
 
         await _context.Entry(entity).Reference(t => t.TrabajosOrigenDestino).LoadAsync();
         await _context.Entry(entity).Reference(t => t.TrabajosScripts).LoadAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Trabajo, AccionLog.Create, null, SnapshotTrabajo(entity));
         return MapToResponse(entity);
     }
 
@@ -80,6 +87,8 @@ public class TrabajoService : ITrabajoService
             .Include(t => t.TrabajosScripts)
             .FirstOrDefaultAsync(t => t.Id == id);
         if (entity is null) return null;
+
+        var antes = SnapshotTrabajo(entity);
 
         if (request.Nombre is not null)
         {
@@ -143,16 +152,48 @@ public class TrabajoService : ITrabajoService
 
         entity.FechaModificacion = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Trabajo, AccionLog.Update, antes, SnapshotTrabajo(entity));
         return MapToResponse(entity);
     }
 
     public async Task<bool> Delete(int id)
     {
-        var entity = await _context.Trabajos.FirstOrDefaultAsync(t => t.Id == id);
+        var entity = await _context.Trabajos
+            .Include(t => t.TrabajosOrigenDestino)
+            .Include(t => t.TrabajosScripts)
+            .FirstOrDefaultAsync(t => t.Id == id);
         if (entity is null) return false;
+        var antes = SnapshotTrabajo(entity);
         _context.Trabajos.Remove(entity);
         await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Trabajo, AccionLog.Delete, antes, null);
         return true;
+    }
+
+    private static object SnapshotTrabajo(Trabajo t)
+    {
+        var p = t.TrabajosOrigenDestino;
+        var s = t.TrabajosScripts;
+        return new
+        {
+            t.Id,
+            t.Nombre,
+            t.Descripcion,
+            t.TrabajosOrigenDestinoId,
+            t.TrabajosScriptsId,
+            origenId = p?.OrigenId,
+            destinoId = p?.DestinoId,
+            scriptPreId = s?.ScriptPreId,
+            scriptPostId = s?.ScriptPostId,
+            preDetenerEnFallo = s?.PreDetenerEnFallo,
+            postDetenerEnFallo = s?.PostDetenerEnFallo,
+            t.CronExpression,
+            t.Activo,
+            t.Procesando,
+            t.EstatusPrevio,
+            t.FechaCreacion,
+            t.FechaModificacion
+        };
     }
 
     private static TrabajoResponse MapToResponse(Trabajo t)

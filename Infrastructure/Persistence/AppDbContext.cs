@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<ScriptConfiguration> ScriptConfigurations => Set<ScriptConfiguration>();
     public DbSet<StorageProvider> StorageProviders => Set<StorageProvider>();
     public DbSet<UserStorages> UserStorages => Set<UserStorages>();
+    public DbSet<LogAccionesUsuario> LogAccionesUsuario => Set<LogAccionesUsuario>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

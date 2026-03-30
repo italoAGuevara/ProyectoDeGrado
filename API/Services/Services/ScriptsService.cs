@@ -1,3 +1,4 @@
+using API.Audit;
 using API.DTOs;
 using API.Exceptions;
 using API.Services.Interfaces;
@@ -10,8 +11,13 @@ namespace API.Services.Services
     public class ScriptsService : IScriptsService
     {
         private readonly AppDbContext _context;
+        private readonly ILogAccionesUsuarioWriter _logAcciones;
 
-        public ScriptsService(AppDbContext context) => _context = context;
+        public ScriptsService(AppDbContext context, ILogAccionesUsuarioWriter logAcciones)
+        {
+            _context = context;
+            _logAcciones = logAcciones;
+        }
 
         public async Task<IEnumerable<ScriptResponse>> GetAll()
         {
@@ -35,6 +41,12 @@ namespace API.Services.Services
         public async Task<ScriptResponse> Create(CreateScriptRequest request)
         {
             ValidateTipo(request.Tipo);
+
+            if (string.IsNullOrEmpty(request.Nombre)) 
+            { 
+                throw new BadRequestException("El campo 'Nombre' es obligatorio.");
+            }
+
             var entity = new ScriptConfiguration
             {
                 Nombre = request.Nombre,
@@ -44,6 +56,7 @@ namespace API.Services.Services
             };
             _context.ScriptConfigurations.Add(entity);
             await _context.SaveChangesAsync();
+            await _logAcciones.RegistrarAsync(TablasAfectadas.Script, AccionLog.Create, null, SnapshotScript(entity));
             return MapToResponse(entity);
         }
 
@@ -51,6 +64,8 @@ namespace API.Services.Services
         {
             var entity = await _context.ScriptConfigurations.FirstOrDefaultAsync(s => s.Id == id);
             if (entity is null) return null;
+
+            var antes = SnapshotScript(entity);
 
             if (request.Nombre is not null) entity.Nombre = request.Nombre;
             if (request.ScriptPath is not null) entity.ScriptPath = request.ScriptPath;
@@ -62,6 +77,7 @@ namespace API.Services.Services
             }
 
             await _context.SaveChangesAsync();
+            await _logAcciones.RegistrarAsync(TablasAfectadas.Script, AccionLog.Update, antes, SnapshotScript(entity));
             return MapToResponse(entity);
         }
 
@@ -75,10 +91,23 @@ namespace API.Services.Services
             if (enUso)
                 throw new ConflictException($"El script '{id}' está asignado como pre o post en uno o más trabajos.");
 
+            var antes = SnapshotScript(entity);
             _context.ScriptConfigurations.Remove(entity);
             await _context.SaveChangesAsync();
+            await _logAcciones.RegistrarAsync(TablasAfectadas.Script, AccionLog.Delete, antes, null);
             return true;
         }
+
+        private static object SnapshotScript(ScriptConfiguration s) => new
+        {
+            s.Id,
+            s.Nombre,
+            s.ScriptPath,
+            s.Arguments,
+            s.Tipo,
+            s.CreatedOn,
+            s.UpdatedOn
+        };
 
         private static ScriptResponse MapToResponse(ScriptConfiguration s) => new(
             s.Id,

@@ -1,3 +1,4 @@
+using API.Audit;
 using API.DTOs;
 using API.Exceptions;
 using API.Services.Interfaces;
@@ -11,11 +12,16 @@ public class DestinoService : IDestinoService
 {
     private readonly AppDbContext _context;
     private readonly IDestinoCredentialProtector _credentialProtector;
+    private readonly ILogAccionesUsuarioWriter _logAcciones;
 
-    public DestinoService(AppDbContext context, IDestinoCredentialProtector credentialProtector)
+    public DestinoService(
+        AppDbContext context,
+        IDestinoCredentialProtector credentialProtector,
+        ILogAccionesUsuarioWriter logAcciones)
     {
         _context = context;
         _credentialProtector = credentialProtector;
+        _logAcciones = logAcciones;
     }
 
     public async Task<IEnumerable<DestinoResponse>> GetAll()
@@ -54,6 +60,7 @@ public class DestinoService : IDestinoService
         };
         _context.Destinos.Add(entity);
         await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Destino, AccionLog.Create, null, SnapshotDestino(entity));
         return MapToResponse(entity);
     }
 
@@ -61,6 +68,8 @@ public class DestinoService : IDestinoService
     {
         var entity = await _context.Destinos.FirstOrDefaultAsync(d => d.Id == id);
         if (entity is null) return null;
+
+        var antes = SnapshotDestino(entity);
 
         if (request.Nombre is not null)
         {
@@ -81,6 +90,7 @@ public class DestinoService : IDestinoService
 
         entity.FechaModificacion = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Destino, AccionLog.Update, antes, SnapshotDestino(entity));
         return MapToResponse(entity);
     }
 
@@ -88,10 +98,23 @@ public class DestinoService : IDestinoService
     {
         var entity = await _context.Destinos.FirstOrDefaultAsync(d => d.Id == id);
         if (entity is null) return false;
+        var antes = SnapshotDestino(entity);
         _context.Destinos.Remove(entity);
         await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Destino, AccionLog.Delete, antes, null);
         return true;
     }
+
+    /// <summary>No persiste credenciales; solo indica si había valor almacenado.</summary>
+    private static object SnapshotDestino(Destino d) => new
+    {
+        d.Id,
+        d.Nombre,
+        d.TipoDeDestino,
+        credencialesConfiguradas = !string.IsNullOrEmpty(d.Credenciales),
+        d.FechaCreacion,
+        d.FechaModificacion
+    };
 
     private static DestinoResponse MapToResponse(Destino d) => new(
         d.Id,
