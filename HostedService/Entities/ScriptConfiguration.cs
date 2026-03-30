@@ -5,7 +5,7 @@ namespace HostedService.Entities
     public class ScriptConfiguration
     {
         public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
         public string ScriptPath { get; set; } = string.Empty;
         public string Arguments { get; set; } = string.Empty;
 

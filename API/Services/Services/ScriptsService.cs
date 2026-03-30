@@ -2,6 +2,7 @@ using API.DTOs;
 using API.Exceptions;
 using API.Services.Interfaces;
 using HostedService.Entities;
+using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Services.Services
@@ -16,7 +17,7 @@ namespace API.Services.Services
         {
             var list = await _context.ScriptConfigurations
                 .AsNoTracking()
-                .OrderBy(s => s.Name)
+                .OrderBy(s => s.Nombre)
                 .ToListAsync();
             return list.Select(MapToResponse).OrderBy(x => x.Id);
         }
@@ -36,7 +37,7 @@ namespace API.Services.Services
             ValidateTipo(request.Tipo);
             var entity = new ScriptConfiguration
             {
-                Name = request.Name,
+                Nombre = request.Nombre,
                 ScriptPath = request.ScriptPath,
                 Arguments = request.Arguments,
                 Tipo = request.Tipo.ToLower()
@@ -51,7 +52,7 @@ namespace API.Services.Services
             var entity = await _context.ScriptConfigurations.FirstOrDefaultAsync(s => s.Id == id);
             if (entity is null) return null;
 
-            if (request.Name is not null) entity.Name = request.Name;
+            if (request.Nombre is not null) entity.Nombre = request.Nombre;
             if (request.ScriptPath is not null) entity.ScriptPath = request.ScriptPath;
             if (request.Arguments is not null) entity.Arguments = request.Arguments;
             if (request.Tipo is not null)
@@ -75,7 +76,7 @@ namespace API.Services.Services
 
         private static ScriptResponse MapToResponse(ScriptConfiguration s) => new(
             s.Id,
-            s.Name,
+            s.Nombre,
             s.ScriptPath,
             s.Arguments,
             s.Tipo);

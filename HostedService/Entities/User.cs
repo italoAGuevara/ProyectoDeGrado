@@ -1,4 +1,4 @@
-namespace API.Entitys
+namespace HostedService.Entities
 {
     public class User
     {

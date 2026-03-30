@@ -1,6 +1,7 @@
 using API.Exceptions;
 using API.Services.Interfaces;
 using API.Utility;
+using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;

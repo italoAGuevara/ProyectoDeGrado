@@ -1,13 +1,10 @@
-using API;
 using API.Endpoints;
-using API.Entitys;
 using API.Middleware;
 using API.Services.Interfaces;
 using HostedService;
-using HostedService.Entities;
-using HostedService.Enums;
+using Infrastructure.DependencyInjection;
+using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -63,7 +60,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
-builder.Services.AddDbContext<AppDbContext>();
+builder.Services.AddInfrastructurePersistence();
 
 
 builder.Services.AddCors(options =>
@@ -84,6 +81,7 @@ builder.Services.AddHostedService<Robot>();
 
 builder.Services.AddTransient<ILogin, LoginService>();
 builder.Services.AddScoped<IScriptsService, ScriptsService>();
+builder.Services.AddScoped<IOrigenService, OrigenService>();
 
 var app = builder.Build();
 
@@ -126,8 +124,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapAuthEndpoint();
 app.MapScripts();
-
-app.Run();
+app.MapOrigenes();
 
 try
 {

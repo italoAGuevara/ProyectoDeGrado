@@ -47,6 +47,10 @@ namespace API.Middleware
                         statusCode = (int)HttpStatusCode.BadRequest;
                         break;
 
+                    case ConflictException:
+                        statusCode = (int)HttpStatusCode.Conflict;
+                        break;
+
                     case UnauthorizedException unauthorizedException:
                         statusCode = (int)HttpStatusCode.Unauthorized;
                         break;

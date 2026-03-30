@@ -4,8 +4,12 @@ namespace HostedService.Entities
     public class Origen
     {
         public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Path { get; set; } = string.Empty;
-        public string? Description { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Ruta { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public string TamanoMaximo { get; set; } = string.Empty;
+        public string FiltrosExclusiones { get; set; } = string.Empty;
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+        public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
     }
 }
