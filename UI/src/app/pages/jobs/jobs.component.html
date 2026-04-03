@@ -11,6 +11,12 @@
 
   <div class="app-card card border-0 overflow-hidden">
     <div class="card-body p-0">
+      @if (jobsLoading()) {
+        <div class="p-4 text-center text-muted">
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Cargando trabajos…
+        </div>
+      } @else {
       <div class="table-responsive">
         <table class="table table-modern table-hover mb-0">
           <thead>
@@ -29,7 +35,7 @@
               <tr>
                 <td class="fw-500">{{ job.name }}</td>
                 <td class="small text-muted">{{ job.description || '—' }}</td>
-                <td>{{ job.destinationName }}</td>
+                <td>{{ destinationLabel(job) }}</td>
                 <td><span class="badge bg-light text-dark">{{ scheduleLabel(job.schedule) }}</span></td>
                 <td>
                   @for (s of getJobScripts(job); track $index) {
@@ -141,6 +147,7 @@
             </select>
           </div>
         </div>
+      }
       }
     </div>
   </div>

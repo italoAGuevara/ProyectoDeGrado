@@ -52,8 +52,8 @@ public class TrabajoService : ITrabajoService
 
         await EnsureOrigenExistsAsync(request.OrigenId);
         await EnsureDestinoExistsAsync(request.DestinoId);
-        await EnsureScriptExistsAsync(request.ScriptPreId);
-        await EnsureScriptExistsAsync(request.ScriptPostId);
+        await EnsureScriptIfProvidedAsync(request.ScriptPreId);
+        await EnsureScriptIfProvidedAsync(request.ScriptPostId);
 
         var linkId = await GetOrCreateTrabajosOrigenDestinoIdAsync(request.OrigenId, request.DestinoId);
         var scriptsId = await GetOrCreateTrabajoScriptsIdAsync(
@@ -128,26 +128,26 @@ public class TrabajoService : ITrabajoService
             await _context.Entry(entity).Reference(t => t.TrabajosOrigenDestino).LoadAsync();
         }
 
-        var changeScripts = request.ScriptPreId is not null
-            || request.ScriptPostId is not null
-            || request.PreDetenerEnFallo is not null
-            || request.PostDetenerEnFallo is not null;
-        if (changeScripts)
+        if (request.SincronizarScripts == true)
         {
-            if (request.ScriptPreId is null || request.ScriptPostId is null)
-                throw new BadRequestException("scriptPreId y scriptPostId deben enviarse juntos para cambiar los scripts.");
-
-            await EnsureScriptExistsAsync(request.ScriptPreId.Value);
-            await EnsureScriptExistsAsync(request.ScriptPostId.Value);
-
+            await EnsureScriptIfProvidedAsync(request.ScriptPreId);
+            await EnsureScriptIfProvidedAsync(request.ScriptPostId);
             var preStop = request.PreDetenerEnFallo ?? entity.TrabajosScripts.PreDetenerEnFallo;
             var postStop = request.PostDetenerEnFallo ?? entity.TrabajosScripts.PostDetenerEnFallo;
             entity.TrabajosScriptsId = await GetOrCreateTrabajoScriptsIdAsync(
-                request.ScriptPreId.Value,
-                request.ScriptPostId.Value,
+                request.ScriptPreId,
+                request.ScriptPostId,
                 preStop,
                 postStop);
             await _context.Entry(entity).Reference(t => t.TrabajosScripts).LoadAsync();
+        }
+        else if (request.PreDetenerEnFallo is not null || request.PostDetenerEnFallo is not null)
+        {
+            if (request.PreDetenerEnFallo is not null)
+                entity.TrabajosScripts.PreDetenerEnFallo = request.PreDetenerEnFallo.Value;
+            if (request.PostDetenerEnFallo is not null)
+                entity.TrabajosScripts.PostDetenerEnFallo = request.PostDetenerEnFallo.Value;
+            entity.TrabajosScripts.FechaModificacion = DateTime.UtcNow;
         }
 
         entity.FechaModificacion = DateTime.UtcNow;
@@ -234,7 +234,7 @@ public class TrabajoService : ITrabajoService
         return link.Id;
     }
 
-    private async Task<int> GetOrCreateTrabajoScriptsIdAsync(int scriptPreId, int scriptPostId, bool preDetener, bool postDetener)
+    private async Task<int> GetOrCreateTrabajoScriptsIdAsync(int? scriptPreId, int? scriptPostId, bool preDetener, bool postDetener)
     {
         var existing = await _context.TrabajosScripts
             .FirstOrDefaultAsync(x =>
@@ -273,6 +273,12 @@ public class TrabajoService : ITrabajoService
     {
         if (!await _context.ScriptConfigurations.AnyAsync(s => s.Id == id))
             throw new BadRequestException($"No existe un script con Id '{id}'.");
+    }
+
+    private async Task EnsureScriptIfProvidedAsync(int? id)
+    {
+        if (id is null) return;
+        await EnsureScriptExistsAsync(id.Value);
     }
 
     private static void ValidateRequired(string value, string fieldName)

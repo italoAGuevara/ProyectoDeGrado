@@ -1,58 +1,31 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { ScriptsService } from '../../services/scripts.service';
 import { ToastService } from '../../services/toast.service';
 import { JobsService, Job } from '../../services/jobs.service';
-
-/** Cron: minuto hora díaMes mes díaSemana (0=domingo, 6=sábado) */
-const WEEKDAY_LABELS: { value: number; label: string }[] = [
-  { value: 0, label: 'D' },
-  { value: 1, label: 'L' },
-  { value: 2, label: 'M' },
-  { value: 3, label: 'X' },
-  { value: 4, label: 'J' },
-  { value: 5, label: 'V' },
-  { value: 6, label: 'S' },
-];
+import { DestinationsService } from '../../services/destinations.service';
 
 @Component({
   selector: 'app-jobs',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './jobs.component.html',
   styleUrl: './jobs.component.css',
 })
-export class JobsComponent {
+export class JobsComponent implements OnInit {
   private router = inject(Router);
   private scriptsService = inject(ScriptsService);
   private toastService = inject(ToastService);
   private jobsService = inject(JobsService);
+  private destinationsService = inject(DestinationsService);
 
   readonly Math = Math;
-  readonly weekdayOptions = WEEKDAY_LABELS;
-  readonly hours = Array.from({ length: 24 }, (_, i) => i);
-  // ... (rest of the code)
-
-  // ...
-
-  runJob(job: Job): void {
-    // Aquí conectarás con el backend para ejecutar el trabajo
-    this.runningJobId.set(job.id);
-    this.toastService.show(`Iniciando trabajo: ${job.name}`, 'info');
-
-    setTimeout(() => {
-      this.runningJobId.set(null);
-      this.toastService.show(`Trabajo finalizado: ${job.name}`, 'success');
-      // Por ahora solo feedback visual; luego: llamar API y mostrar resultado
-    }, 1500);
-  }
-  readonly minutes = [0, 15, 30, 45];
-  readonly daysOfMonth = Array.from({ length: 31 }, (_, i) => i + 1);
 
   availableScripts = this.scriptsService.scripts;
-
   jobs = this.jobsService.jobs;
+  readonly jobsLoading = this.jobsService.loading;
 
   readonly pageSize = signal(10);
   readonly currentPage = signal(1);
@@ -73,6 +46,27 @@ export class JobsComponent {
   readonly hasPrevPage = computed(() => this.currentPage() > 1);
   readonly hasNextPage = computed(() => this.currentPage() < this.totalPages());
 
+  ngOnInit(): void {
+    this.jobsService.loadAll();
+    this.scriptsService.loadAll();
+    this.destinationsService.loadAll();
+  }
+
+  destinationLabel(job: Job): string {
+    const d = this.destinationsService.destinations().find((x) => x.id === job.destinoId);
+    return d?.name ?? `Destino #${job.destinoId}`;
+  }
+
+  runJob(job: Job): void {
+    this.runningJobId.set(job.id);
+    this.toastService.show(`Iniciando trabajo: ${job.name}`, 'info');
+
+    setTimeout(() => {
+      this.runningJobId.set(null);
+      this.toastService.show(`Trabajo finalizado: ${job.name}`, 'success');
+    }, 1500);
+  }
+
   setPage(page: number): void {
     const max = this.totalPages();
     this.currentPage.set(Math.max(1, Math.min(page, max)));
@@ -88,27 +82,19 @@ export class JobsComponent {
   }
 
   openEdit(job: Job): void {
-    this.router.navigate(['/trabajos/nuevo', { id: job.id }]);
+    this.router.navigate(['/trabajos', job.id, 'editar']);
   }
 
   deleteJob(job: Job): void {
-    if (confirm(`¿Eliminar trabajo "${job.name}"?`)) {
-      this.jobsService.deleteJob(job.id);
-      this.toastService.show(`Trabajo eliminado: ${job.name}`, 'warning');
-    }
+    if (!confirm(`¿Eliminar trabajo "${job.name}"?`)) return;
+    this.jobsService.deleteById(job.id).subscribe();
   }
 
   togglePause(job: Job): void {
-    this.jobsService.updateJob({ ...job, enabled: !job.enabled });
-    if (job.enabled) {
-      this.toastService.show(`Trabajo pausado: ${job.name}`, 'info');
-    } else {
-      this.toastService.show(`Trabajo activado: ${job.name}`, 'success');
-    }
+    this.jobsService.update(job.id, { activo: !job.enabled }).subscribe();
   }
 
-  /** ID del trabajo que se está ejecutando (para estado visual) */
-  runningJobId = signal<string | null>(null);
+  runningJobId = signal<number | null>(null);
 
   isRunning(job: Job): boolean {
     return this.runningJobId() === job.id;
@@ -134,13 +120,15 @@ export class JobsComponent {
 
   getJobScripts(job: Job): { name: string; when: 'pre' | 'post' }[] {
     const allScripts = this.availableScripts();
-    return (job.scripts || [])
-      .map((js) => {
-        const s = allScripts.find((as) => as.id === js.scriptId);
-        return s ? { name: s.name, when: js.when } : null;
-      })
-      .filter((item): item is { name: string; when: 'pre' | 'post' } => !!item);
+    const out: { name: string; when: 'pre' | 'post' }[] = [];
+    if (job.scriptPreId != null) {
+      const pre = allScripts.find((s) => s.id === String(job.scriptPreId));
+      if (pre) out.push({ name: pre.name, when: 'pre' });
+    }
+    if (job.scriptPostId != null) {
+      const post = allScripts.find((s) => s.id === String(job.scriptPostId));
+      if (post) out.push({ name: post.name, when: 'post' });
+    }
+    return out;
   }
-
-
 }

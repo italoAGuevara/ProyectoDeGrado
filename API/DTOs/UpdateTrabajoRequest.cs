@@ -14,5 +14,7 @@ public record UpdateTrabajoRequest(
     [property: JsonPropertyName("cronExpression")] string? CronExpression,
     [property: JsonPropertyName("activo")] bool? Activo,
     [property: JsonPropertyName("procesando")] bool? Procesando,
-    [property: JsonPropertyName("estatusPrevio")] string? EstatusPrevio
+    [property: JsonPropertyName("estatusPrevio")] string? EstatusPrevio,
+    /// <summary>Si es true, scriptPreId y scriptPostId sustituyen el estado de scripts (null = sin script).</summary>
+    [property: JsonPropertyName("sincronizarScripts")] bool? SincronizarScripts
 );

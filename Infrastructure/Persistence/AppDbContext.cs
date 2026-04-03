@@ -49,11 +49,13 @@ public class AppDbContext : DbContext
             entity.HasOne(ts => ts.ScriptPre)
                 .WithMany(s => s.TrabajoScriptsComoPre)
                 .HasForeignKey(ts => ts.ScriptPreId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(ts => ts.ScriptPost)
                 .WithMany(s => s.TrabajoScriptsComoPost)
                 .HasForeignKey(ts => ts.ScriptPostId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

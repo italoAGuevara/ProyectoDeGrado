@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { JobsService, Job } from '../../../services/jobs.service';
 import { ScriptsService } from '../../../services/scripts.service';
+import { DestinationsService } from '../../../services/destinations.service';
 import { ReportBreadcrumbComponent, BreadcrumbItem } from '../../../layout/report-breadcrumb/report-breadcrumb.component';
 
 @Component({
@@ -11,15 +12,27 @@ import { ReportBreadcrumbComponent, BreadcrumbItem } from '../../../layout/repor
   templateUrl: './job-report.component.html',
   styleUrl: './job-report.component.css',
 })
-export class JobReportComponent {
+export class JobReportComponent implements OnInit {
   private jobsService = inject(JobsService);
   private scriptsService = inject(ScriptsService);
+  private destinationsService = inject(DestinationsService);
 
   breadcrumbItems: BreadcrumbItem[] = [
     { label: 'Reportes', link: '/reportes' },
     { label: 'Reporte de trabajos' },
   ];
   jobs = this.jobsService.jobs;
+
+  ngOnInit(): void {
+    this.jobsService.loadAll();
+    this.scriptsService.loadAll();
+    this.destinationsService.loadAll();
+  }
+
+  destinationLabel(job: Job): string {
+    const d = this.destinationsService.destinations().find((x) => x.id === job.destinoId);
+    return d?.name ?? `Destino #${job.destinoId}`;
+  }
 
   scheduleLabel(schedule: string): string {
     const parts = schedule.trim().split(/\s+/);
@@ -41,12 +54,16 @@ export class JobReportComponent {
 
   getJobScripts(job: Job): { name: string; when: 'pre' | 'post' }[] {
     const allScripts = this.scriptsService.scripts();
-    return (job.scripts || [])
-      .map((js) => {
-        const s = allScripts.find((as) => as.id === js.scriptId);
-        return s ? { name: s.name, when: js.when } : null;
-      })
-      .filter((item): item is { name: string; when: 'pre' | 'post' } => !!item);
+    const out: { name: string; when: 'pre' | 'post' }[] = [];
+    if (job.scriptPreId != null) {
+      const pre = allScripts.find((s) => s.id === String(job.scriptPreId));
+      if (pre) out.push({ name: pre.name, when: 'pre' });
+    }
+    if (job.scriptPostId != null) {
+      const post = allScripts.find((s) => s.id === String(job.scriptPostId));
+      if (post) out.push({ name: post.name, when: 'post' });
+    }
+    return out;
   }
 
   countActive(): number {

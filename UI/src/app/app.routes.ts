@@ -30,6 +30,7 @@ export const routes: Routes = [
       { path: '', component: HomeComponent },
       { path: 'trabajos', component: JobsComponent },
       { path: 'trabajos/nuevo', component: JobWizardComponent },
+      { path: 'trabajos/:id/editar', component: JobWizardComponent },
       { path: 'destinos', component: DestinationsComponent },
       { path: 'scripts', component: ScriptsComponent },
       { path: 'reportes/trabajos', component: JobReportComponent },

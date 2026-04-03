@@ -4,14 +4,14 @@ namespace HostedService.Entities;
 public class TrabajoScripts
 {
     public int Id { get; set; }
-    public int ScriptPreId { get; set; }
+    public int? ScriptPreId { get; set; }
     public bool PreDetenerEnFallo { get; set; }
-    public int ScriptPostId { get; set; }
+    public int? ScriptPostId { get; set; }
     public bool PostDetenerEnFallo { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
 
-    public ScriptConfiguration ScriptPre { get; set; } = null!;
-    public ScriptConfiguration ScriptPost { get; set; } = null!;
+    public ScriptConfiguration? ScriptPre { get; set; }
+    public ScriptConfiguration? ScriptPost { get; set; }
     public ICollection<Trabajo> Trabajos { get; set; } = new List<Trabajo>();
 }

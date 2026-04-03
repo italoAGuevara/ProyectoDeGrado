@@ -61,7 +61,7 @@
               <tr>
                 <td class="fw-500">{{ job.name }}</td>
                 <td class="small text-muted">{{ job.description || '—' }}</td>
-                <td>{{ job.destinationName }}</td>
+                <td>{{ destinationLabel(job) }}</td>
                 <td><span class="badge bg-light text-dark">{{ scheduleLabel(job.schedule) }}</span></td>
                 <td>
                   @for (s of getJobScripts(job); track $index) {
