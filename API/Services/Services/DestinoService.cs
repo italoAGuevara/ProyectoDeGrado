@@ -165,6 +165,20 @@ public class DestinoService : IDestinoService
     {
         var entity = await _context.Destinos.FirstOrDefaultAsync(d => d.Id == id);
         if (entity is null) return false;
+
+        var enUso = await _context.Trabajos.AnyAsync(t => t.TrabajosOrigenDestino.DestinoId == id);
+        if (enUso)
+            throw new ConflictException("El destino está asociado a uno o más trabajos.");
+
+        var vinculosHuerfanos = await _context.TrabajosOrigenDestinos
+            .Where(l => l.DestinoId == id)
+            .ToListAsync();
+        if (vinculosHuerfanos.Count > 0)
+        {
+            _context.TrabajosOrigenDestinos.RemoveRange(vinculosHuerfanos);
+            await _context.SaveChangesAsync();
+        }
+
         var antes = SnapshotDestino(entity);
         _context.Destinos.Remove(entity);
         await _context.SaveChangesAsync();
