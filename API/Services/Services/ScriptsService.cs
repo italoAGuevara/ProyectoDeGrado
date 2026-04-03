@@ -91,10 +91,26 @@ namespace API.Services.Services
             var entity = await _context.ScriptConfigurations.FirstOrDefaultAsync(s => s.Id == id);
             if (entity is null) return false;
 
-            var enUso = await _context.TrabajosScripts.AnyAsync(ts =>
-                ts.ScriptPreId == id || ts.ScriptPostId == id);
+            // Solo filas de TrabajosScripts enlazadas a un Trabajo (las demás son huérfanas tras cambiar scripts).
+            var enUso = await _context.Trabajos.AnyAsync(t =>
+                (t.TrabajosScripts.ScriptPreId == id) || (t.TrabajosScripts.ScriptPostId == id));
             if (enUso)
                 throw new ConflictException($"El script está asignado como pre o post en uno o más trabajos.");
+
+            // Bundles huérfanos (u otros) pueden seguir apuntando por FK; hay que quitar la referencia antes del DELETE.
+            var bundles = await _context.TrabajosScripts
+                .Where(ts => ts.ScriptPreId == id || ts.ScriptPostId == id)
+                .ToListAsync();
+            var ahora = DateTime.UtcNow;
+            foreach (var ts in bundles)
+            {
+                if (ts.ScriptPreId == id) ts.ScriptPreId = null;
+                if (ts.ScriptPostId == id) ts.ScriptPostId = null;
+                ts.FechaModificacion = ahora;
+            }
+
+            if (bundles.Count > 0)
+                await _context.SaveChangesAsync();
 
             var antes = SnapshotScript(entity);
             _context.ScriptConfigurations.Remove(entity);
