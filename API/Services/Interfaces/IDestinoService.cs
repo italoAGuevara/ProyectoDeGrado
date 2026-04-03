@@ -9,4 +9,8 @@ public interface IDestinoService
     Task<DestinoResponse> Create(CreateDestinoRequest request);
     Task<DestinoResponse?> Update(int id, UpdateDestinoRequest request);
     Task<bool> Delete(int id);
+
+    Task<GoogleDriveValidacionResponse> ValidarConexionGoogleDriveAsync(
+        ValidarGoogleDriveRequest request,
+        CancellationToken cancellationToken = default);
 }

@@ -227,6 +227,12 @@
             </div>
           }
 
+          @if (formType === 'google_drive') {
+            <p class="small text-muted mb-0 mt-2">
+              «Probar conexión» llama a la API: se validan la cuenta de servicio y el acceso a la carpeta en Google Drive. Al <strong>crear</strong> el destino se ejecuta la misma comprobación en el servidor.
+            </p>
+          }
+
           <div class="mb-0 pt-2 border-top mt-3">
             <button
               type="button"

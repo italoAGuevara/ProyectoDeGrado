@@ -11,6 +11,7 @@ import {
   UpdateDestinoPayload,
 } from '../../services/destinations.service';
 import { ToastService } from '../../services/toast.service';
+import { messageFromHttpError } from '../../utils/http-error.util';
 
 type S3ConfigMode = 'bucket_region' | 'credentials';
 
@@ -111,37 +112,48 @@ export class DestinationsComponent implements OnInit {
           return;
         }
       }
-    } else {
-      const folderId = this.formFolderId?.trim();
-      const email = this.formGoogleServiceAccountEmail?.trim();
-      const key = this.formGooglePrivateKey?.trim();
-      if (!folderId) {
-        this.testResult.set({ success: false, message: 'Completa el ID de carpeta.' });
-        return;
-      }
-      if (!email || !key) {
-        this.testResult.set({
-          success: false,
-          message: 'Completa el correo de la Service Account y la clave privada.',
-        });
-        return;
-      }
-    }
-    this.testingConnection.set(true);
-    setTimeout(() => {
-      this.testingConnection.set(false);
-      if (this.formType === 's3') {
+      this.testingConnection.set(true);
+      setTimeout(() => {
+        this.testingConnection.set(false);
         this.testResult.set({
           success: true,
           message: 'Conexión con S3 verificada (simulado).',
         });
-      } else {
-        this.testResult.set({
-          success: true,
-          message: 'Conexión con Google Drive verificada (simulado).',
-        });
-      }
-    }, 1200);
+      }, 1200);
+      return;
+    }
+
+    const folderId = this.formFolderId?.trim();
+    const email = this.formGoogleServiceAccountEmail?.trim();
+    const key = this.formGooglePrivateKey?.trim();
+    if (!folderId) {
+      this.testResult.set({ success: false, message: 'Completa el ID de carpeta.' });
+      return;
+    }
+    if (!email || !key) {
+      const editing = !!this.editingDest();
+      this.testResult.set({
+        success: false,
+        message:
+          editing && email && !key
+            ? 'Para probar la conexión, pega de nuevo la clave privada (no se muestra al editar por seguridad).'
+            : 'Completa el correo de la Service Account y la clave privada.',
+      });
+      return;
+    }
+
+    this.testingConnection.set(true);
+    this.destSvc
+      .validarGoogleDrive({ idCarpeta: folderId, serviceAccountEmail: email, privateKey: key })
+      .pipe(finalize(() => this.testingConnection.set(false)))
+      .subscribe({
+        next: (r) => {
+          this.testResult.set({ success: true, message: r.mensaje });
+        },
+        error: (err: unknown) => {
+          this.testResult.set({ success: false, message: messageFromHttpError(err) });
+        },
+      });
   }
 
   save(): void {

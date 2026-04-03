@@ -1,11 +1,17 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using API.Audit;
 using API.DTOs;
 using API.Exceptions;
 using API.Services.Interfaces;
 using HostedService.Entities;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Drive.v3;
+using Google.Apis.Services;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using File = Google.Apis.Drive.v3.Data.File;
 
 namespace API.Services.Services;
 
@@ -90,6 +96,11 @@ public class DestinoService : IDestinoService
                 throw new BadRequestException("serviceAccountEmail es obligatorio para Google Drive.");
             if (string.IsNullOrWhiteSpace(request.PrivateKey))
                 throw new BadRequestException("privateKey es obligatorio para Google Drive.");
+            await ValidarGoogleDriveCredencialesAsync(
+                idCarpeta,
+                request.ServiceAccountEmail.Trim(),
+                request.PrivateKey,
+                CancellationToken.None);
             googleServiceEmail = request.ServiceAccountEmail.Trim();
             googlePrivateEnc = _credentialProtector.Protect(request.PrivateKey.Trim());
         }
@@ -155,6 +166,18 @@ public class DestinoService : IDestinoService
                 throw new BadRequestException("idCarpeta es obligatorio para Google Drive.");
         }
 
+        if (entity.TipoDeDestino == DestinoTipos.GoogleDrive)
+        {
+            if (string.IsNullOrWhiteSpace(entity.GoogleServiceAccountEmail))
+                throw new BadRequestException("serviceAccountEmail es obligatorio para Google Drive.");
+            var plainKey = GetGooglePrivateKeyPlaintextOrThrow(entity);
+            await ValidarGoogleDriveCredencialesAsync(
+                entity.IdCarpeta,
+                entity.GoogleServiceAccountEmail,
+                plainKey,
+                CancellationToken.None);
+        }
+
         entity.FechaModificacion = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         await _logAcciones.RegistrarAsync(TablasAfectadas.Destino, AccionLog.Update, antes, SnapshotDestino(entity));
@@ -184,6 +207,120 @@ public class DestinoService : IDestinoService
         await _context.SaveChangesAsync();
         await _logAcciones.RegistrarAsync(TablasAfectadas.Destino, AccionLog.Delete, antes, null);
         return true;
+    }
+
+    public async Task<GoogleDriveValidacionResponse> ValidarConexionGoogleDriveAsync(
+        ValidarGoogleDriveRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateRequired(request.IdCarpeta, nameof(request.IdCarpeta));
+        ValidateRequired(request.ServiceAccountEmail, nameof(request.ServiceAccountEmail));
+        ValidateRequired(request.PrivateKey, nameof(request.PrivateKey));
+        var idCarpeta = ValidateIdCarpetaGoogleDrive(request.IdCarpeta);
+        return await ValidarGoogleDriveCredencialesAsync(
+            idCarpeta,
+            request.ServiceAccountEmail.Trim(),
+            request.PrivateKey,
+            cancellationToken);
+    }
+
+    /// <summary>Comprueba credenciales y que <paramref name="idCarpeta"/> sea una carpeta accesible.</summary>
+    private async Task<GoogleDriveValidacionResponse> ValidarGoogleDriveCredencialesAsync(
+        string idCarpeta,
+        string serviceAccountEmail,
+        string privateKeyOrJson,
+        CancellationToken cancellationToken)
+    {
+        var folderId = idCarpeta.Trim();
+        var email = serviceAccountEmail.Trim();
+        var pk = NormalizeGooglePrivateKeyInput(privateKeyOrJson);
+        if (string.IsNullOrWhiteSpace(pk))
+            throw new BadRequestException("privateKey es obligatorio.");
+                
+        var serviceAccountJson = BuildMinimalServiceAccountJson(email, pk);
+        GoogleCredential credential;
+        try
+        {
+            await using var ms = new MemoryStream(Encoding.UTF8.GetBytes(serviceAccountJson));
+            credential = await GoogleCredential.FromStreamAsync(ms, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            throw new BadRequestException($"Credenciales de cuenta de servicio no válidas: {ex.Message}");
+        }
+
+        credential = credential.CreateScoped(DriveService.Scope.DriveReadonly);
+
+        var service = new DriveService(new BaseClientService.Initializer
+        {
+            HttpClientInitializer = credential,
+            ApplicationName = "evocative-lodge-415320",
+        });
+
+        File meta;
+        try
+        {
+            var req = service.Files.Get(folderId);
+            req.Fields = "id,name,mimeType";
+            req.SupportsAllDrives = true;
+            meta = await req.ExecuteAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Google.GoogleApiException ex)
+        {
+            var detail = ex.Error?.Message ?? ex.Message;
+            throw new BadRequestException(
+                $"Google Drive rechazó la operación. Comprueba el ID de carpeta, que la carpeta esté compartida con la cuenta de servicio y el detalle: {detail}");
+        }
+
+        if (!string.Equals(meta.MimeType, "application/vnd.google-apps.folder", StringComparison.Ordinal))
+            throw new BadRequestException("El idCarpeta no corresponde a una carpeta de Google Drive.");
+
+        var nombre = meta.Name ?? folderId;
+        return new GoogleDriveValidacionResponse(
+            $"Conexión correcta. Carpeta: «{nombre}».",
+            nombre);
+    }
+
+    private static string NormalizeGooglePrivateKeyInput(string key)
+    {
+        var k = key.Trim();
+        if (!k.StartsWith("{", StringComparison.Ordinal))
+        {
+            return k.Replace("\\r\\n", "\n", StringComparison.Ordinal)
+                .Replace("\\n", "\n", StringComparison.Ordinal);
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(k);
+            if (!doc.RootElement.TryGetProperty("private_key", out var pkEl))
+                throw new BadRequestException("El JSON de la cuenta de servicio no contiene private_key.");
+            var extracted = pkEl.GetString();
+            if (string.IsNullOrWhiteSpace(extracted))
+                throw new BadRequestException("private_key vacío en el JSON.");
+            return extracted;
+        }
+        catch (JsonException)
+        {
+            throw new BadRequestException("privateKey debe ser el PEM de la clave privada o el JSON completo de la cuenta de servicio.");
+        }
+    }
+
+    private static string BuildMinimalServiceAccountJson(string clientEmail, string privateKeyPem)
+    {
+        var payload = new Dictionary<string, string>
+        {
+            ["type"] = "service_account",
+            ["project_id"] = "cloudkeep-connection-test",
+            ["private_key_id"] = "connection-test",
+            ["private_key"] = privateKeyPem,
+            ["client_email"] = clientEmail,
+            ["client_id"] = "0",
+            ["auth_uri"] = "https://accounts.google.com/o/oauth2/auth",
+            ["token_uri"] = "https://oauth2.googleapis.com/token",
+            ["auth_provider_x509_cert_url"] = "https://www.googleapis.com/oauth2/v1/certs"
+        };
+        return JsonSerializer.Serialize(payload);
     }
 
     /// <summary>No persiste credenciales; solo indica si había valor almacenado.</summary>
@@ -305,6 +442,22 @@ public class DestinoService : IDestinoService
             entity.SecretAccessKey = string.IsNullOrWhiteSpace(r.SecretAccessKey)
                 ? string.Empty
                 : _credentialProtector.Protect(r.SecretAccessKey.Trim());
+        }
+    }
+
+    private string GetGooglePrivateKeyPlaintextOrThrow(Destino entity)
+    {
+        if (string.IsNullOrWhiteSpace(entity.GooglePrivateKey))
+            throw new BadRequestException(
+                "privateKey es obligatoria para Google Drive (vuelve a pegar la clave si editaste el destino).");
+        try
+        {
+            return _credentialProtector.Unprotect(entity.GooglePrivateKey);
+        }
+        catch (CryptographicException)
+        {
+            throw new BadRequestException(
+                "No se pudo descifrar la clave privada almacenada. Guarda de nuevo la clave de la cuenta de servicio.");
         }
     }
 
