@@ -70,8 +70,8 @@ export class DestinationsComponent implements OnInit {
     if (d.type === 's3' && (d.accessKeyId ?? '').trim()) {
       this.formS3Mode = 'credentials';
       this.formAccessKeyId = d.accessKeyId;
-      this.formBucket = '';
-      this.formRegion = 'us-east-1';
+      this.formBucket = d.bucketName ?? '';
+      this.formRegion = (d.region ?? '').trim() ? (d.region ?? '').trim() : 'us-east-1';
     } else {
       this.formS3Mode = 'bucket_region';
       this.formAccessKeyId = '';
@@ -91,17 +91,19 @@ export class DestinationsComponent implements OnInit {
   testConnection(): void {
     this.testResult.set(null);
     if (this.formType === 's3') {
-      if (this.formS3Mode === 'bucket_region') {
-        const bucket = this.formBucket?.trim();
-        const region = this.formRegion?.trim();
-        if (!bucket || !region) {
-          this.testResult.set({
-            success: false,
-            message: 'Completa Bucket y Región.',
-          });
-          return;
-        }
-      } else {
+      const bucket = this.formBucket?.trim();
+      const region = this.formRegion?.trim();
+      if (!bucket || !region) {
+        this.testResult.set({
+          success: false,
+          message:
+            this.formS3Mode === 'bucket_region'
+              ? 'Completa Bucket y Región.'
+              : 'Completa Bucket Full Name y Región.',
+        });
+        return;
+      }
+      if (this.formS3Mode === 'credentials') {
         const accessKey = this.formAccessKeyId?.trim();
         const secretKey = this.formSecretAccessKey?.trim();
         if (!accessKey || !secretKey) {
@@ -112,14 +114,29 @@ export class DestinationsComponent implements OnInit {
           return;
         }
       }
+
       this.testingConnection.set(true);
-      setTimeout(() => {
-        this.testingConnection.set(false);
-        this.testResult.set({
-          success: true,
-          message: 'Conexión con S3 verificada (simulado).',
+      const s3Body =
+        this.formS3Mode === 'credentials'
+          ? {
+              bucketName: bucket,
+              region,
+              accessKeyId: this.formAccessKeyId.trim(),
+              secretAccessKey: this.formSecretAccessKey,
+            }
+          : { bucketName: bucket, region };
+
+      this.destSvc
+        .validarS3(s3Body)
+        .pipe(finalize(() => this.testingConnection.set(false)))
+        .subscribe({
+          next: (r) => {
+            this.testResult.set({ success: true, message: r.mensaje });
+          },
+          error: (err: unknown) => {
+            this.testResult.set({ success: false, message: messageFromHttpError(err) });
+          },
         });
-      }, 1200);
       return;
     }
 
@@ -241,13 +258,19 @@ export class DestinationsComponent implements OnInit {
       }
       return { nombre, tipoApi, bucketName, region };
     }
+    const bucketName = this.formBucket.trim();
+    const region = this.formRegion.trim();
     const accessKeyId = this.formAccessKeyId.trim();
     const secretAccessKey = this.formSecretAccessKey.trim();
+    if (!bucketName || !region) {
+      this.toast.show('Completa Bucket Full Name y región para S3 con claves de acceso.', 'error');
+      return null;
+    }
     if (!accessKeyId || !secretAccessKey) {
       this.toast.show('Completa Access Key ID y Secret Access Key para S3.', 'error');
       return null;
     }
-    return { nombre, tipoApi, accessKeyId, secretAccessKey };
+    return { nombre, tipoApi, bucketName, region, accessKeyId, secretAccessKey };
   }
 
   private tryBuildUpdatePayload(nombre: string, edit: DestinoRow): UpdateDestinoPayload | null {
@@ -276,6 +299,15 @@ export class DestinationsComponent implements OnInit {
       payload.region = region;
       return payload;
     }
+
+    const bucketName = this.formBucket.trim();
+    const region = this.formRegion.trim();
+    if (!bucketName || !region) {
+      this.toast.show('Completa Bucket Full Name y región para S3 con claves de acceso.', 'error');
+      return null;
+    }
+    payload.bucketName = bucketName;
+    payload.region = region;
 
     const accessKeyId = this.formAccessKeyId.trim();
     if (!accessKeyId) {

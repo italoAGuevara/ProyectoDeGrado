@@ -72,6 +72,12 @@ export interface GoogleDriveValidacionDto {
   nombreCarpeta?: string | null;
 }
 
+export interface S3ValidacionDto {
+  mensaje: string;
+  bucket?: string | null;
+  identityArn?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -146,6 +152,30 @@ export class DestinationsService {
         map((res) => unwrapApiDetails<GoogleDriveValidacionDto>(res)),
         catchError((err) => throwError(() => err))
       );
+  }
+
+  /**
+   * Prueba acceso al bucket con HeadBucket.
+   * Sin accessKey/secret usa la cadena de credenciales del servidor (modo IAM).
+   */
+  validarS3(body: {
+    bucketName: string;
+    region: string;
+    accessKeyId?: string;
+    secretAccessKey?: string;
+  }): Observable<S3ValidacionDto> {
+    const payload: Record<string, string> = {
+      bucketName: body.bucketName.trim(),
+      region: body.region.trim(),
+    };
+    if (body.accessKeyId !== undefined && body.secretAccessKey !== undefined) {
+      payload['accessKeyId'] = body.accessKeyId.trim();
+      payload['secretAccessKey'] = body.secretAccessKey;
+    }
+    return this.http.post<unknown>(`${API_DESTINOS}/validar-s3`, payload).pipe(
+      map((res) => unwrapApiDetails<S3ValidacionDto>(res)),
+      catchError((err) => throwError(() => err))
+    );
   }
 
   deleteById(id: number): Observable<void> {

@@ -1,6 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.SecurityToken;
+using Amazon.SecurityToken.Model;
 using API.Audit;
 using API.DTOs;
 using API.Exceptions;
@@ -78,8 +84,12 @@ public class DestinoService : IDestinoService
             {
                 if (string.IsNullOrWhiteSpace(request.SecretAccessKey))
                     throw new BadRequestException("secretAccessKey es obligatorio para S3 con claves de acceso.");
+                if (string.IsNullOrWhiteSpace(request.BucketName) || string.IsNullOrWhiteSpace(request.Region))
+                    throw new BadRequestException("bucketName y region son obligatorios para S3 con claves de acceso.");
                 accessKeyId = ak;
                 secretEnc = _credentialProtector.Protect(request.SecretAccessKey.Trim());
+                bucketName = request.BucketName.Trim();
+                s3Region = request.Region.Trim();
                 blobPlain = BuildS3KeysCredencialesJson(accessKeyId);
             }
             else
@@ -222,6 +232,105 @@ public class DestinoService : IDestinoService
             request.ServiceAccountEmail.Trim(),
             request.PrivateKey,
             cancellationToken);
+    }
+
+    public async Task<S3ValidacionResponse> ValidarConexionS3Async(
+        ValidarS3Request request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.BucketName))
+            throw new BadRequestException("bucketName es obligatorio.");
+        if (string.IsNullOrWhiteSpace(request.Region))
+            throw new BadRequestException("region es obligatoria.");
+
+        var bucket = request.BucketName.Trim();
+        var regionName = request.Region.Trim();
+        var ak = request.AccessKeyId?.Trim() ?? string.Empty;
+        var skRaw = request.SecretAccessKey ?? string.Empty;
+        var sk = skRaw.Trim();
+        var hasAk = !string.IsNullOrWhiteSpace(ak);
+        var hasSk = !string.IsNullOrWhiteSpace(skRaw);
+        if (hasAk != hasSk)
+            throw new BadRequestException("Para validar con claves de acceso, envía accessKeyId y secretAccessKey juntos.");
+
+        RegionEndpoint regionEndpoint;
+        try
+        {
+            regionEndpoint = RegionEndpoint.GetBySystemName(regionName);
+        }
+        catch (ArgumentException)
+        {
+            throw new BadRequestException($"Región AWS no reconocida: «{regionName}».");
+        }
+
+        var config = new AmazonS3Config { RegionEndpoint = regionEndpoint };
+        AWSCredentials? explicitCreds = hasAk ? new BasicAWSCredentials(ak, sk) : null;
+        using var s3Client = explicitCreds != null
+            ? new AmazonS3Client(explicitCreds, config)
+            : new AmazonS3Client(config);
+
+        try
+        {
+            await s3Client.HeadBucketAsync(new HeadBucketRequest { BucketName = bucket }, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            throw new BadRequestException(DescribeS3HeadBucketFailure(ex));
+        }
+        catch (AmazonClientException ex)
+        {
+            throw new BadRequestException(
+                $"No se pudieron resolver credenciales de AWS en el servidor o la solicitud falló: {ex.Message}");
+        }
+
+        var identityArn = await TryGetCallerIdentityArnAsync(explicitCreds, regionEndpoint, cancellationToken)
+            .ConfigureAwait(false);
+        var mensaje = identityArn is { Length: > 0 }
+            ? $"Conexión correcta con el bucket «{bucket}» (región {regionName}). Identidad: {identityArn}."
+            : $"Conexión correcta con el bucket «{bucket}» (región {regionName}).";
+
+        return new S3ValidacionResponse(mensaje, bucket, identityArn);
+    }
+
+    private static async Task<string?> TryGetCallerIdentityArnAsync(
+        AWSCredentials? credentials,
+        RegionEndpoint regionEndpoint,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var sts = credentials != null
+                ? new AmazonSecurityTokenServiceClient(credentials, regionEndpoint)
+                : new AmazonSecurityTokenServiceClient(regionEndpoint);
+            var resp = await sts.GetCallerIdentityAsync(new GetCallerIdentityRequest(), cancellationToken)
+                .ConfigureAwait(false);
+            return string.IsNullOrWhiteSpace(resp.Arn) ? null : resp.Arn;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string DescribeS3HeadBucketFailure(AmazonS3Exception ex)
+    {
+        var code = ex.ErrorCode;
+        if (string.Equals(code, "NoSuchBucket", StringComparison.OrdinalIgnoreCase))
+            return "El bucket no existe o el nombre es incorrecto.";
+        if (string.Equals(code, "AccessDenied", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(code, "Forbidden", StringComparison.OrdinalIgnoreCase)
+            || ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            return "Acceso denegado al bucket. Revisa permisos IAM (p. ej. s3:ListBucket) y que el bucket sea el correcto.";
+        if (string.Equals(code, "InvalidAccessKeyId", StringComparison.OrdinalIgnoreCase))
+            return "Access Key ID no válido.";
+        if (string.Equals(code, "SignatureDoesNotMatch", StringComparison.OrdinalIgnoreCase))
+            return "Secret Access Key incorrecta.";
+        if (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return "El bucket no existe o el nombre es incorrecto.";
+
+        var detail = !string.IsNullOrWhiteSpace(code) ? code : ex.StatusCode.ToString();
+        return $"AWS S3 respondió ({detail}): {ex.Message}";
     }
 
     /// <summary>Comprueba credenciales y que <paramref name="idCarpeta"/> sea una carpeta accesible.</summary>
@@ -411,9 +520,11 @@ public class DestinoService : IDestinoService
 
         if (hasAk)
         {
+            if (string.IsNullOrWhiteSpace(r.BucketName) || string.IsNullOrWhiteSpace(r.Region))
+                throw new BadRequestException("bucketName y region son obligatorios para S3 con claves de acceso.");
             entity.AccessKeyId = akRaw;
-            entity.BucketName = string.Empty;
-            entity.S3Region = string.Empty;
+            entity.BucketName = r.BucketName.Trim();
+            entity.S3Region = r.Region.Trim();
             if (r.SecretAccessKey != null)
             {
                 entity.SecretAccessKey = string.IsNullOrWhiteSpace(r.SecretAccessKey)

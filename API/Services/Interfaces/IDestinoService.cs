@@ -13,4 +13,8 @@ public interface IDestinoService
     Task<GoogleDriveValidacionResponse> ValidarConexionGoogleDriveAsync(
         ValidarGoogleDriveRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<S3ValidacionResponse> ValidarConexionS3Async(
+        ValidarS3Request request,
+        CancellationToken cancellationToken = default);
 }

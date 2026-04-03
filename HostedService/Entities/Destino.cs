@@ -13,9 +13,9 @@ namespace HostedService.Entities
         public string AccessKeyId { get; set; } = string.Empty;
         /// <summary>Secret Access Key de S3 protegido con Data Protection (no texto plano).</summary>
         public string SecretAccessKey { get; set; } = string.Empty;
-        /// <summary>Nombre del bucket S3 (modo IAM / bucket y región); vacío si usa Access Key.</summary>
+        /// <summary>Nombre del bucket S3 (IAM o claves de acceso).</summary>
         public string BucketName { get; set; } = string.Empty;
-        /// <summary>Región AWS del bucket (modo IAM); vacío si usa Access Key.</summary>
+        /// <summary>Región AWS del bucket (IAM o claves de acceso).</summary>
         public string S3Region { get; set; } = string.Empty;
         /// <summary>Correo de la cuenta de servicio de Google (solo Google Drive).</summary>
         public string GoogleServiceAccountEmail { get; set; } = string.Empty;

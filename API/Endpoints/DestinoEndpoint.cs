@@ -21,6 +21,9 @@ public static class DestinoEndpoint
         group.MapPost("/validar-google-drive", ValidarGoogleDrive)
             .WithName("ValidarGoogleDrive");
 
+        group.MapPost("/validar-s3", ValidarS3)
+            .WithName("ValidarS3");
+
         group.MapPut("/{id:int}", UpdateDestino)
             .WithName("UpdateDestino");
 
@@ -52,6 +55,15 @@ public static class DestinoEndpoint
         CancellationToken cancellationToken)
     {
         var res = await destinoService.ValidarConexionGoogleDriveAsync(request, cancellationToken);
+        return Results.Ok(res);
+    }
+
+    private static async Task<IResult> ValidarS3(
+        ValidarS3Request request,
+        IDestinoService destinoService,
+        CancellationToken cancellationToken)
+    {
+        var res = await destinoService.ValidarConexionS3Async(request, cancellationToken);
         return Results.Ok(res);
     }
 
