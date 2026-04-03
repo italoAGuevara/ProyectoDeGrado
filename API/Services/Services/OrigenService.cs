@@ -1,3 +1,4 @@
+using System.IO;
 using API.Audit;
 using API.DTOs;
 using API.Exceptions;
@@ -100,6 +101,91 @@ public class OrigenService : IOrigenService
         await _context.SaveChangesAsync();
         await _logAcciones.RegistrarAsync(TablasAfectadas.Origen, AccionLog.Delete, antes, null);
         return true;
+    }
+
+    public Task<RutaValidaResponse> ValidarRutaAsync(string ruta)
+    {
+        var normalized = NormalizeAndEnsureDirectoryExists(ruta);
+        return Task.FromResult(new RutaValidaResponse(normalized));
+    }
+
+    public async Task<OrigenResponse> AsegurarPorRutaAsync(string ruta)
+    {
+        var normalized = NormalizeAndEnsureDirectoryExists(ruta);
+        var existing = await FindByRutaCaseInsensitiveAsync(normalized);
+        if (existing is not null)
+            return MapToResponse(existing);
+
+        var nombre = await BuildUniqueNombreFromPathAsync(normalized);
+        var entity = new Origen
+        {
+            Nombre = nombre,
+            Ruta = normalized,
+            Descripcion = $"Respaldo desde carpeta local.",
+            TamanoMaximo = string.Empty,
+            FiltrosExclusiones = string.Empty
+        };
+        _context.Origenes.Add(entity);
+        await _context.SaveChangesAsync();
+        await _logAcciones.RegistrarAsync(TablasAfectadas.Origen, AccionLog.Create, null, SnapshotOrigen(entity));
+        return MapToResponse(entity);
+    }
+
+    private static string NormalizeAndEnsureDirectoryExists(string rutaRaw)
+    {
+        if (string.IsNullOrWhiteSpace(rutaRaw))
+            throw new BadRequestException("ruta es obligatoria.");
+
+        var trimmed = rutaRaw.Trim();
+        string fullPath;
+        try
+        {
+            fullPath = Path.GetFullPath(trimmed);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            throw new BadRequestException("La ruta no es válida.");
+        }
+
+        if (!Directory.Exists(fullPath))
+            throw new BadRequestException(
+                "La carpeta no existe en el equipo donde se ejecuta la API. Comprueba la ruta en ese servidor o máquina.");
+
+        return fullPath;
+    }
+
+    private async Task<Origen?> FindByRutaCaseInsensitiveAsync(string normalizedFullPath)
+    {
+        var list = await _context.Origenes.AsNoTracking().ToListAsync();
+        return list.FirstOrDefault(o =>
+            string.Equals(o.Ruta.Trim(), normalizedFullPath, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<string> BuildUniqueNombreFromPathAsync(string fullPath)
+    {
+        string name;
+        try
+        {
+            name = new DirectoryInfo(fullPath).Name;
+        }
+        catch
+        {
+            name = "Carpeta";
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+            name = "Raíz";
+
+        var baseName = $"Respaldo · {name}";
+        var candidate = baseName;
+        var i = 2;
+        while (await _context.Origenes.AnyAsync(o => o.Nombre == candidate))
+        {
+            candidate = $"{baseName} ({i})";
+            i++;
+        }
+
+        return candidate;
     }
 
     private static object SnapshotOrigen(Origen o) => new

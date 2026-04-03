@@ -74,27 +74,38 @@
         </div>
       }
 
-      <!-- Paso 3: Origen -->
+      <!-- Paso 3: Origen (ruta en el servidor de la API) -->
       @if (currentStep === 2) {
         <h4 class="mb-3">Origen del respaldo</h4>
-        <p class="text-muted small">El origen define la ruta local y los filtros del respaldo (se gestiona en la API de orígenes).</p>
+        <p class="text-muted small">
+          Escribe la ruta de la carpeta que quieres respaldar. La comprobación se hace en el equipo donde está ejecutándose la API (no en tu navegador).
+        </p>
         <div class="mb-3">
-          <label class="form-label fw-500">Seleccionar origen</label>
-          @if (originsService.loading()) {
-            <div class="small text-muted py-2">
+          <label class="form-label fw-500">Ruta de carpeta</label>
+          <input
+            type="text"
+            class="form-control font-monospace"
+            [(ngModel)]="formOrigenRuta"
+            (ngModelChange)="onOrigenRutaChange()"
+            placeholder="Ej: C:\Users\Usuario\Documents"
+            autocomplete="off"
+          />
+          <div class="form-text">Debe existir como carpeta en ese servidor. Puedes usar «Comprobar carpeta» o continuar con «Siguiente», que validará la ruta automáticamente.</div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-modern"
+            (click)="comprobarOrigenPath()"
+            [disabled]="checkingOrigenPath()"
+          >
+            @if (checkingOrigenPath()) {
               <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Cargando orígenes…
-            </div>
-          } @else {
-            <select class="form-select" [(ngModel)]="formOrigenId">
-              <option [ngValue]="null" disabled>— Elige un origen —</option>
-              @for (o of origins(); track o.id) {
-                <option [ngValue]="o.id">{{ o.name }} — {{ o.path }}</option>
-              }
-            </select>
-            @if (origins().length === 0) {
-              <p class="small text-warning mb-0 mt-2">No hay orígenes configurados en el sistema.</p>
             }
+            Comprobar carpeta
+          </button>
+          @if (origenPathValidated()) {
+            <span class="text-success small fw-500">Carpeta verificada en el servidor</span>
           }
         </div>
       }
@@ -226,9 +237,11 @@
         type="button"
         class="btn wizard-btn-next"
         (click)="nextStep()"
-        [disabled]="saving() || loadingJob()"
+        [disabled]="saving() || loadingJob() || checkingOrigenPath()"
       >
         @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        } @else if (checkingOrigenPath()) {
           <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
         }
         {{ currentStep === steps.length - 1 ? (isEditMode() ? 'Guardar' : 'Finalizar') : 'Siguiente' }}

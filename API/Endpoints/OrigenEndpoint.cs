@@ -18,6 +18,12 @@ public static class OrigenEndpoint
         group.MapPost("/", CreateOrigen)
             .WithName("CreateOrigen");
 
+        group.MapPost("/validar-ruta", ValidarRutaOrigen)
+            .WithName("ValidarRutaOrigen");
+
+        group.MapPost("/asegurar-por-ruta", AsegurarOrigenPorRuta)
+            .WithName("AsegurarOrigenPorRuta");
+
         group.MapPut("/{id:int}", UpdateOrigen)
             .WithName("UpdateOrigen");
 
@@ -41,6 +47,18 @@ public static class OrigenEndpoint
     {
         var origen = await origenService.Create(request);
         return Results.Created($"/api/origenes/{origen.Id}", origen);
+    }
+
+    private static async Task<IResult> ValidarRutaOrigen(RutaOrigenRequest request, IOrigenService origenService)
+    {
+        var res = await origenService.ValidarRutaAsync(request.Ruta);
+        return Results.Ok(res);
+    }
+
+    private static async Task<IResult> AsegurarOrigenPorRuta(RutaOrigenRequest request, IOrigenService origenService)
+    {
+        var origen = await origenService.AsegurarPorRutaAsync(request.Ruta);
+        return Results.Ok(origen);
     }
 
     private static async Task<IResult> UpdateOrigen(int id, UpdateOrigenRequest request, IOrigenService origenService)

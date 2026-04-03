@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { map, switchMap, finalize } from 'rxjs/operators';
 import { ScriptsService } from '../../../services/scripts.service';
 import { ToastService } from '../../../services/toast.service';
 import { DestinationsService } from '../../../services/destinations.service';
@@ -76,11 +77,14 @@ export class JobWizardComponent implements OnInit {
   readonly scriptsService = inject(ScriptsService);
   private toastService = inject(ToastService);
   readonly destinationsService = inject(DestinationsService);
-  readonly originsService = inject(OriginsService);
+  private originsService = inject(OriginsService);
   private jobsService = inject(JobsService);
 
   readonly saving = signal(false);
   readonly loadingJob = signal(false);
+  readonly checkingOrigenPath = signal(false);
+  /** La API confirmó que la carpeta existe (ruta canónica en el servidor). */
+  readonly origenPathValidated = signal(false);
 
   readonly weekdayOptions = WEEKDAY_LABELS;
   readonly hours = Array.from({ length: 24 }, (_, i) => i);
@@ -88,7 +92,6 @@ export class JobWizardComponent implements OnInit {
   readonly daysOfMonth = Array.from({ length: 31 }, (_, i) => i + 1);
 
   destinations = this.destinationsService.destinations;
-  origins = this.originsService.origins;
   availableScripts = this.scriptsService.scripts;
 
   readonly isEditMode = computed(() => this.editingJobId() !== null);
@@ -101,7 +104,8 @@ export class JobWizardComponent implements OnInit {
   formDescription = '';
   formEnabled = true;
   formDestinoId: number | null = null;
-  formOrigenId: number | null = null;
+  /** Ruta de carpeta local; la existencia se valida en el servidor (donde corre la API). */
+  formOrigenRuta = '';
 
   formScheduleType: 'daily' | 'weekly' | 'monthly' = 'daily';
   formScheduleHour = 2;
@@ -117,7 +121,6 @@ export class JobWizardComponent implements OnInit {
   ngOnInit(): void {
     this.scriptsService.loadAll();
     this.destinationsService.loadAll();
-    this.originsService.loadAll();
 
     this.route.paramMap.subscribe((p) => {
       const idStr = p.get('id');
@@ -139,7 +142,8 @@ export class JobWizardComponent implements OnInit {
     this.formDescription = '';
     this.formEnabled = true;
     this.formDestinoId = null;
-    this.formOrigenId = null;
+    this.formOrigenRuta = '';
+    this.origenPathValidated.set(false);
     this.formScheduleType = 'daily';
     this.formScheduleHour = 2;
     this.formScheduleMinute = 0;
@@ -154,22 +158,26 @@ export class JobWizardComponent implements OnInit {
 
   private loadJobForEdit(id: number): void {
     this.loadingJob.set(true);
-    this.jobsService.getById(id).subscribe({
-      next: (job) => {
-        this.formName = job.name;
-        this.formDescription = job.description;
-        this.formEnabled = job.enabled;
-        this.formDestinoId = job.destinoId;
-        this.formOrigenId = job.origenId;
-        this.formScriptPreId = job.scriptPreId;
-        this.formScriptPostId = job.scriptPostId;
-        this.formPreDetenerEnFallo = job.preDetenerEnFallo;
-        this.formPostDetenerEnFallo = job.postDetenerEnFallo;
-        applyCronToForm(job.schedule, this);
-        this.loadingJob.set(false);
-      },
-      error: () => this.loadingJob.set(false),
-    });
+    this.jobsService
+      .getById(id)
+      .pipe(switchMap((job) => this.originsService.getByIdQuiet(job.origenId).pipe(map((origen) => ({ job, origen })))))
+      .subscribe({
+        next: ({ job, origen }) => {
+          this.formName = job.name;
+          this.formDescription = job.description;
+          this.formEnabled = job.enabled;
+          this.formDestinoId = job.destinoId;
+          this.formOrigenRuta = origen?.path ?? '';
+          this.origenPathValidated.set(!!origen?.path);
+          this.formScriptPreId = job.scriptPreId;
+          this.formScriptPostId = job.scriptPostId;
+          this.formPreDetenerEnFallo = job.preDetenerEnFallo;
+          this.formPostDetenerEnFallo = job.postDetenerEnFallo;
+          applyCronToForm(job.schedule, this);
+          this.loadingJob.set(false);
+        },
+        error: () => this.loadingJob.set(false),
+      });
   }
 
   get currentStepName(): string {
@@ -196,7 +204,7 @@ export class JobWizardComponent implements OnInit {
     if (!this.formName.trim()) return 'Indica un nombre para el trabajo.';
     if (!this.formDescription.trim()) return 'La descripción es obligatoria.';
     if (this.formDestinoId == null) return 'Selecciona un destino.';
-    if (this.formOrigenId == null) return 'Selecciona un origen.';
+    if (!this.formOrigenRuta.trim()) return 'Indica la ruta de la carpeta de respaldo.';
     return null;
   }
 
@@ -207,10 +215,10 @@ export class JobWizardComponent implements OnInit {
       return;
     }
 
-    const payload = {
+    const ruta = this.formOrigenRuta.trim();
+    const basePayload = {
       nombre: this.formName.trim(),
       descripcion: this.formDescription.trim(),
-      origenId: this.formOrigenId!,
       destinoId: this.formDestinoId!,
       scriptPreId: this.formScriptPreId,
       scriptPostId: this.formScriptPostId,
@@ -221,39 +229,88 @@ export class JobWizardComponent implements OnInit {
     };
 
     this.saving.set(true);
-    const id = this.editingJobId();
-    const req =
-      id != null
-        ? this.jobsService.update(id, {
-            nombre: payload.nombre,
-            descripcion: payload.descripcion,
-            origenId: payload.origenId,
-            destinoId: payload.destinoId,
-            scriptPreId: payload.scriptPreId,
-            scriptPostId: payload.scriptPostId,
-            preDetenerEnFallo: payload.preDetenerEnFallo,
-            postDetenerEnFallo: payload.postDetenerEnFallo,
-            cronExpression: payload.cronExpression,
-            activo: payload.activo,
-            sincronizarScripts: true,
-          })
-        : this.jobsService.create(payload);
+    const editId = this.editingJobId();
 
-    req.subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.router.navigate(['/trabajos']);
-      },
-      error: () => this.saving.set(false),
-    });
+    this.originsService
+      .asegurarPorRuta(ruta)
+      .pipe(
+        switchMap((origen) => {
+          if (editId != null) {
+            return this.jobsService.update(editId, {
+              ...basePayload,
+              origenId: origen.id,
+              sincronizarScripts: true,
+            });
+          }
+          return this.jobsService.create({
+            ...basePayload,
+            origenId: origen.id,
+          });
+        }),
+        finalize(() => this.saving.set(false))
+      )
+      .subscribe({
+        next: () => this.router.navigate(['/trabajos']),
+        error: () => {},
+      });
   }
 
   nextStep(): void {
+    if (this.currentStep === 2) {
+      const r = this.formOrigenRuta.trim();
+      if (!r) {
+        this.toastService.show('Indica la ruta de la carpeta.', 'error');
+        return;
+      }
+      if (this.origenPathValidated()) {
+        this.advanceStepOrSave();
+        return;
+      }
+      this.runValidarOrigenEnServidor(() => this.advanceStepOrSave());
+      return;
+    }
+    this.advanceStepOrSave();
+  }
+
+  /** Avanza de paso o ejecuta guardado si ya estamos en el último. */
+  private advanceStepOrSave(): void {
     if (this.currentStep < this.steps.length - 1) {
       this.currentStep++;
     } else {
       this.saveJob();
     }
+  }
+
+  onOrigenRutaChange(): void {
+    this.origenPathValidated.set(false);
+  }
+
+  comprobarOrigenPath(): void {
+    this.runValidarOrigenEnServidor(() => {
+      this.toastService.show('La carpeta existe en el servidor.', 'success');
+    });
+  }
+
+  /**
+   * Valida la carpeta en la API (Path + Directory.Exists en el servidor).
+   * @param onSuccess se ejecuta solo si la validación fue correcta.
+   */
+  private runValidarOrigenEnServidor(onSuccess: () => void): void {
+    const r = this.formOrigenRuta.trim();
+    if (!r) {
+      this.toastService.show('Escribe la ruta de la carpeta.', 'error');
+      return;
+    }
+    this.checkingOrigenPath.set(true);
+    this.originsService.validarRuta(r).subscribe({
+      next: (res) => {
+        this.checkingOrigenPath.set(false);
+        this.formOrigenRuta = res.ruta;
+        this.origenPathValidated.set(true);
+        onSuccess();
+      },
+      error: () => this.checkingOrigenPath.set(false),
+    });
   }
 
   prevStep(): void {

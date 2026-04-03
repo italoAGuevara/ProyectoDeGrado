@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { unwrapApiDetails } from '../utils/api-response.util';
 import { messageFromHttpError } from '../utils/http-error.util';
 import { ToastService } from './toast.service';
@@ -16,6 +17,10 @@ interface OrigenApiDto {
   nombre: string;
   ruta: string;
   descripcion: string;
+}
+
+interface RutaValidaApiDto {
+  ruta: string;
 }
 
 const API_ORIGENES = '/api/origenes';
@@ -44,6 +49,46 @@ export class OriginsService {
         this.toast.show(messageFromHttpError(err), 'error');
       },
     });
+  }
+
+  getById(id: number): Observable<OrigenRow> {
+    return this.http.get<unknown>(`${API_ORIGENES}/${id}`).pipe(
+      map((res) => this.fromApi(unwrapApiDetails<OrigenApiDto>(res))),
+      catchError((err) => {
+        this.toast.show(messageFromHttpError(err), 'error');
+        return throwError(() => err);
+      })
+    );
+  }
+
+  /** Igual que getById pero sin toast ni error al fallar (p. ej. asistente de trabajo). */
+  getByIdQuiet(id: number): Observable<OrigenRow | null> {
+    return this.http.get<unknown>(`${API_ORIGENES}/${id}`).pipe(
+      map((res) => this.fromApi(unwrapApiDetails<OrigenApiDto>(res))),
+      catchError(() => of(null))
+    );
+  }
+
+  /** Valida en el servidor que la carpeta exista (Path.GetFullPath + Directory.Exists). */
+  validarRuta(ruta: string): Observable<{ ruta: string }> {
+    return this.http.post<unknown>(`${API_ORIGENES}/validar-ruta`, { ruta }).pipe(
+      map((res) => unwrapApiDetails<RutaValidaApiDto>(res) as { ruta: string }),
+      catchError((err) => {
+        this.toast.show(messageFromHttpError(err), 'error');
+        return throwError(() => err);
+      })
+    );
+  }
+
+  /** Obtiene o crea un origen con esa ruta (misma validación que validarRuta). */
+  asegurarPorRuta(ruta: string): Observable<OrigenRow> {
+    return this.http.post<unknown>(`${API_ORIGENES}/asegurar-por-ruta`, { ruta }).pipe(
+      map((res) => this.fromApi(unwrapApiDetails<OrigenApiDto>(res))),
+      catchError((err) => {
+        this.toast.show(messageFromHttpError(err), 'error');
+        return throwError(() => err);
+      })
+    );
   }
 
   private fromApi(o: OrigenApiDto): OrigenRow {
