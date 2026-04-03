@@ -2,7 +2,6 @@ import { NgClass } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CopyScript, ScriptsService, ScriptType } from '../../services/scripts.service';
-import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-scripts',
@@ -12,7 +11,6 @@ import { ToastService } from '../../services/toast.service';
 })
 export class ScriptsComponent implements OnInit {
   private scriptsService = inject(ScriptsService);
-  private toast = inject(ToastService);
 
   readonly allowedTypes: { value: ScriptType; label: string }[] = [
     { value: 'ps1', label: 'PowerShell (.ps1)' },
@@ -29,6 +27,7 @@ export class ScriptsComponent implements OnInit {
   formScriptType: ScriptType = 'ps1';
   formScriptPath = '';
   formArguments = '';
+  formNameError = signal<string | null>(null);
   formPathError = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -41,6 +40,7 @@ export class ScriptsComponent implements OnInit {
     this.formScriptType = 'ps1';
     this.formScriptPath = '';
     this.formArguments = '';
+    this.formNameError.set(null);
     this.formPathError.set(null);
     this.showModal.set(true);
   }
@@ -51,6 +51,7 @@ export class ScriptsComponent implements OnInit {
     this.formScriptType = script.scriptType;
     this.formScriptPath = script.scriptPath;
     this.formArguments = script.arguments;
+    this.formNameError.set(null);
     this.formPathError.set(null);
     this.showModal.set(true);
   }
@@ -71,11 +72,10 @@ export class ScriptsComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.formName.trim()) {
-      this.toast.show('El nombre es obligatorio.', 'warning');
-      return;
-    }
-    if (!this.validatePath()) return;
+    const nameOk = this.formName.trim().length > 0;
+    this.formNameError.set(nameOk ? null : 'El nombre es obligatorio.');
+    const pathOk = this.validatePath();
+    if (!nameOk || !pathOk) return;
 
     const edit = this.editingScript();
     const script: CopyScript = {
@@ -103,6 +103,20 @@ export class ScriptsComponent implements OnInit {
   closeModal(): void {
     this.showModal.set(false);
     this.editingScript.set(null);
+    this.formNameError.set(null);
+    this.formPathError.set(null);
+  }
+
+  onFormNameInput(): void {
+    if (this.formNameError()) this.formNameError.set(null);
+  }
+
+  onFormPathInput(): void {
+    if (this.formPathError()) this.formPathError.set(null);
+  }
+
+  onFormScriptTypeChange(): void {
+    if (this.formPathError()) this.formPathError.set(null);
   }
 
   deleteScript(script: CopyScript): void {

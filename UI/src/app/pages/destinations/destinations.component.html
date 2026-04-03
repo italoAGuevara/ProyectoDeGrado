@@ -139,12 +139,23 @@
             </p>
           }
           <div class="mb-3">
-            <label class="form-label fw-500">Nombre del destino</label>
-            <input type="text" class="form-control" [(ngModel)]="formName" placeholder="Ej: S3 principal" />
+            <label class="form-label fw-500">Nombre del destino <span class="text-danger" aria-hidden="true">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              [class.is-invalid]="formNameError()"
+              [(ngModel)]="formName"
+              (ngModelChange)="onFormNameInput()"
+              placeholder="Ej: S3 principal"
+              autocomplete="off"
+            />
+            @if (formNameError()) {
+              <div class="invalid-feedback d-block">{{ formNameError() }}</div>
+            }
           </div>
           <div class="mb-3">
-            <label class="form-label fw-500">Tipo</label>
-            <select class="form-select" [(ngModel)]="formType">
+            <label class="form-label fw-500">Tipo <span class="text-danger" aria-hidden="true">*</span></label>
+            <select class="form-select" [(ngModel)]="formType" (ngModelChange)="onFormTypeChange()">
               <option value="s3">Amazon S3</option>
               <option value="google_drive">Google Drive</option>
             </select>
@@ -152,47 +163,129 @@
 
           @if (formType === 's3') {
             <div class="mb-3">
-              <label class="form-label fw-500">Bucket</label>
-              <input type="text" class="form-control" [(ngModel)]="formBucket" placeholder="nombre-del-bucket" />
+              <label class="form-label fw-500">Bucket <span class="text-danger" aria-hidden="true">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="formBucketError()"
+                [(ngModel)]="formBucket"
+                (ngModelChange)="onFormBucketInput()"
+                placeholder="nombre-del-bucket"
+              />
+              @if (formBucketError()) {
+                <div class="invalid-feedback d-block">{{ formBucketError() }}</div>
+              }
             </div>
             <div class="mb-3">
-              <label class="form-label fw-500">Región</label>
-              <input type="text" class="form-control" [(ngModel)]="formRegion" placeholder="us-east-1" />
+              <label class="form-label fw-500">Región <span class="text-danger" aria-hidden="true">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="formRegionError()"
+                [(ngModel)]="formRegion"
+                (ngModelChange)="onFormRegionInput()"
+                placeholder="us-east-1"
+              />
+              @if (formRegionError()) {
+                <div class="invalid-feedback d-block">{{ formRegionError() }}</div>
+              }
             </div>
             <div class="mb-3">
-              <label class="form-label fw-500">Access Key ID</label>
-              <input type="text" class="form-control" [(ngModel)]="formAccessKeyId" placeholder="AKIA..." autocomplete="off" />
+              <label class="form-label fw-500">
+                Access Key ID
+                @if (!editingDest()) {
+                  <span class="text-danger" aria-hidden="true">*</span>
+                }
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="formAccessKeyIdError()"
+                [(ngModel)]="formAccessKeyId"
+                (ngModelChange)="onFormAccessKeyIdInput()"
+                placeholder="AKIA..."
+                autocomplete="off"
+              />
+              @if (formAccessKeyIdError()) {
+                <div class="invalid-feedback d-block">{{ formAccessKeyIdError() }}</div>
+              }
             </div>
             <div class="mb-3">
-              <label class="form-label fw-500">Secret Access Key</label>
-              <input type="password" class="form-control" [(ngModel)]="formSecretAccessKey" placeholder="••••••••" autocomplete="new-password" />
+              <label class="form-label fw-500">
+                Secret Access Key
+                @if (!editingDest()) {
+                  <span class="text-danger" aria-hidden="true">*</span>
+                }
+              </label>
+              <input
+                type="password"
+                class="form-control"
+                [class.is-invalid]="formSecretAccessKeyError()"
+                [(ngModel)]="formSecretAccessKey"
+                (ngModelChange)="onFormSecretAccessKeyInput()"
+                placeholder="••••••••"
+                autocomplete="new-password"
+              />
+              @if (formSecretAccessKeyError()) {
+                <div class="invalid-feedback d-block">{{ formSecretAccessKeyError() }}</div>
+              }
             </div>
           } @else {
             <p class="small text-muted mb-2">Usa una cuenta de servicio de Google Cloud con acceso a Google Drive. Obtén el JSON en la consola de Google Cloud y extrae <code>client_email</code> y <code>private_key</code>.</p>
             <div class="mb-3">
-              <label class="form-label fw-500">Correo de la Service Account</label>
+              <label class="form-label fw-500">
+                Correo de la Service Account
+                @if (!editingDest()) {
+                  <span class="text-danger" aria-hidden="true">*</span>
+                }
+              </label>
               <input
                 type="text"
                 class="form-control"
+                [class.is-invalid]="formGoogleServiceAccountEmailError()"
                 [(ngModel)]="formGoogleServiceAccountEmail"
+                (ngModelChange)="onFormGoogleEmailInput()"
                 placeholder="nombre@proyecto.iam.gserviceaccount.com"
                 autocomplete="off"
               />
+              @if (formGoogleServiceAccountEmailError()) {
+                <div class="invalid-feedback d-block">{{ formGoogleServiceAccountEmailError() }}</div>
+              }
             </div>
             <div class="mb-3">
-              <label class="form-label fw-500">Clave privada (private_key)</label>
+              <label class="form-label fw-500">
+                Clave privada (private_key)
+                @if (!editingDest()) {
+                  <span class="text-danger" aria-hidden="true">*</span>
+                }
+              </label>
               <textarea
                 class="form-control font-monospace small"
+                [class.is-invalid]="formGooglePrivateKeyError()"
                 [(ngModel)]="formGooglePrivateKey"
+                (ngModelChange)="onFormGooglePrivateKeyInput()"
                 placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
                 rows="4"
                 autocomplete="off"
               ></textarea>
+              @if (formGooglePrivateKeyError()) {
+                <div class="invalid-feedback d-block">{{ formGooglePrivateKeyError() }}</div>
+              }
               <p class="small text-muted mb-0 mt-1">Pega el contenido completo del campo <code>private_key</code> del JSON de la cuenta de servicio.</p>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-500">IDCarpeta (ID de carpeta en Google Drive)</label>
-              <input type="text" class="form-control" [(ngModel)]="formFolderId" placeholder="ID de la carpeta de destino" />
+              <label class="form-label fw-500">IDCarpeta (ID de carpeta en Google Drive) <span class="text-danger" aria-hidden="true">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="formFolderIdError()"
+                [(ngModel)]="formFolderId"
+                (ngModelChange)="onFormFolderIdInput()"
+                placeholder="ID de la carpeta de destino"
+              />
+              @if (formFolderIdError()) {
+                <div class="invalid-feedback d-block">{{ formFolderIdError() }}</div>
+              }
               <p class="small text-muted mb-0 mt-1">Carpeta donde se subirán los archivos. Comparte la carpeta en Drive con el correo de la Service Account (como editor).</p>
             </div>
           }

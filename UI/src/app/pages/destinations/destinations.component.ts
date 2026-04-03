@@ -10,7 +10,6 @@ import {
   tipoDestinoUiToApi,
   UpdateDestinoPayload,
 } from '../../services/destinations.service';
-import { ToastService } from '../../services/toast.service';
 import { messageFromHttpError } from '../../utils/http-error.util';
 
 @Component({
@@ -21,7 +20,6 @@ import { messageFromHttpError } from '../../utils/http-error.util';
 })
 export class DestinationsComponent implements OnInit {
   readonly destSvc = inject(DestinationsService);
-  private readonly toast = inject(ToastService);
 
   showModal = signal(false);
   editingDest = signal<DestinoRow | null>(null);
@@ -40,6 +38,15 @@ export class DestinationsComponent implements OnInit {
   testingConnection = signal(false);
   testResult = signal<{ success: boolean; message: string } | null>(null);
 
+  formNameError = signal<string | null>(null);
+  formBucketError = signal<string | null>(null);
+  formRegionError = signal<string | null>(null);
+  formAccessKeyIdError = signal<string | null>(null);
+  formSecretAccessKeyError = signal<string | null>(null);
+  formFolderIdError = signal<string | null>(null);
+  formGoogleServiceAccountEmailError = signal<string | null>(null);
+  formGooglePrivateKeyError = signal<string | null>(null);
+
   ngOnInit(): void {
     this.destSvc.loadAll();
   }
@@ -55,6 +62,7 @@ export class DestinationsComponent implements OnInit {
     this.formFolderId = '';
     this.formGoogleServiceAccountEmail = '';
     this.formGooglePrivateKey = '';
+    this.clearFormFieldErrors();
     this.showModal.set(true);
     this.testResult.set(null);
   }
@@ -77,8 +85,124 @@ export class DestinationsComponent implements OnInit {
     this.formGoogleServiceAccountEmail =
       d.type === 'google_drive' ? (d.serviceAccountEmail ?? '') : '';
     this.formGooglePrivateKey = '';
+    this.clearFormFieldErrors();
     this.showModal.set(true);
     this.testResult.set(null);
+  }
+
+  private clearFormFieldErrors(): void {
+    this.formNameError.set(null);
+    this.formBucketError.set(null);
+    this.formRegionError.set(null);
+    this.formAccessKeyIdError.set(null);
+    this.formSecretAccessKeyError.set(null);
+    this.formFolderIdError.set(null);
+    this.formGoogleServiceAccountEmailError.set(null);
+    this.formGooglePrivateKeyError.set(null);
+  }
+
+  onFormNameInput(): void {
+    if (this.formNameError()) this.formNameError.set(null);
+  }
+
+  onFormTypeChange(): void {
+    this.formBucketError.set(null);
+    this.formRegionError.set(null);
+    this.formAccessKeyIdError.set(null);
+    this.formSecretAccessKeyError.set(null);
+    this.formFolderIdError.set(null);
+    this.formGoogleServiceAccountEmailError.set(null);
+    this.formGooglePrivateKeyError.set(null);
+  }
+
+  onFormBucketInput(): void {
+    if (this.formBucketError()) this.formBucketError.set(null);
+  }
+
+  onFormRegionInput(): void {
+    if (this.formRegionError()) this.formRegionError.set(null);
+  }
+
+  onFormAccessKeyIdInput(): void {
+    if (this.formAccessKeyIdError()) this.formAccessKeyIdError.set(null);
+  }
+
+  onFormSecretAccessKeyInput(): void {
+    if (this.formSecretAccessKeyError()) this.formSecretAccessKeyError.set(null);
+  }
+
+  onFormFolderIdInput(): void {
+    if (this.formFolderIdError()) this.formFolderIdError.set(null);
+  }
+
+  onFormGoogleEmailInput(): void {
+    if (this.formGoogleServiceAccountEmailError()) this.formGoogleServiceAccountEmailError.set(null);
+  }
+
+  onFormGooglePrivateKeyInput(): void {
+    if (this.formGooglePrivateKeyError()) this.formGooglePrivateKeyError.set(null);
+  }
+
+  private validateForm(edit: DestinoRow | null, nombre: string): boolean {
+    let ok = true;
+    if (!nombre) {
+      this.formNameError.set('El nombre es obligatorio.');
+      ok = false;
+    }
+    if (this.formType === 'google_drive') {
+      if (!this.formFolderId.trim()) {
+        this.formFolderIdError.set('El ID de carpeta es obligatorio.');
+        ok = false;
+      }
+      if (!edit) {
+        if (!this.formGoogleServiceAccountEmail.trim()) {
+          this.formGoogleServiceAccountEmailError.set('El correo de la cuenta de servicio es obligatorio.');
+          ok = false;
+        }
+        if (!this.formGooglePrivateKey.trim()) {
+          this.formGooglePrivateKeyError.set('La clave privada es obligatoria.');
+          ok = false;
+        }
+      }
+    } else {
+      if (!this.formBucket.trim()) {
+        this.formBucketError.set('El bucket es obligatorio.');
+        ok = false;
+      }
+      if (!this.formRegion.trim()) {
+        this.formRegionError.set('La región es obligatoria.');
+        ok = false;
+      }
+      if (!edit) {
+        if (!this.formAccessKeyId.trim()) {
+          this.formAccessKeyIdError.set('Access Key ID es obligatorio.');
+          ok = false;
+        }
+        if (!this.formSecretAccessKey.trim()) {
+          this.formSecretAccessKeyError.set('Secret Access Key es obligatorio.');
+          ok = false;
+        }
+      } else {
+        const hadStoredAccessKey = (edit.accessKeyId ?? '').trim().length > 0;
+        const accessKeyId = this.formAccessKeyId.trim();
+        const sk = this.formSecretAccessKey.trim();
+        if (!accessKeyId && !hadStoredAccessKey) {
+          // Sin actualización de credenciales
+        } else {
+          if (!accessKeyId) {
+            this.formAccessKeyIdError.set('Access Key ID es obligatorio para S3 con claves de acceso.');
+            ok = false;
+          }
+          if (!sk && !edit.secretAccessKeyConfigurada && !!accessKeyId) {
+            this.formSecretAccessKeyError.set(
+              'Secret Access Key es obligatorio al configurar claves por primera vez.'
+            );
+            ok = false;
+          }
+        }
+      }
+    }
+    return ok;
   }
 
   testConnection(): void {
@@ -160,15 +284,12 @@ export class DestinationsComponent implements OnInit {
 
   save(): void {
     const nombre = this.formName.trim();
-    if (!nombre) {
-      this.toast.show('El nombre es obligatorio.', 'error');
-      return;
-    }
-
+    this.clearFormFieldErrors();
     const edit = this.editingDest();
+    if (!this.validateForm(edit, nombre)) return;
+
     if (!edit) {
       const createPayload = this.tryBuildCreatePayload(nombre);
-      if (!createPayload) return;
       this.saving.set(true);
       this.destSvc
         .create(createPayload)
@@ -179,13 +300,7 @@ export class DestinationsComponent implements OnInit {
       return;
     }
 
-    if (this.formType === 'google_drive' && !this.formFolderId.trim()) {
-      this.toast.show('IDCarpeta (ID de carpeta) es obligatorio para Google Drive.', 'error');
-      return;
-    }
-
     const updatePayload = this.tryBuildUpdatePayload(nombre, edit);
-    if (!updatePayload) return;
 
     this.saving.set(true);
     this.destSvc
@@ -199,6 +314,7 @@ export class DestinationsComponent implements OnInit {
   closeModal(): void {
     this.showModal.set(false);
     this.editingDest.set(null);
+    this.clearFormFieldErrors();
   }
 
   deleteDest(d: DestinoRow): void {
@@ -218,38 +334,28 @@ export class DestinationsComponent implements OnInit {
     return this.editingDest() ? 'Editar destino' : 'Nuevo destino';
   }
 
-  private tryBuildCreatePayload(nombre: string): CreateDestinoPayload | null {
+  private tryBuildCreatePayload(nombre: string): CreateDestinoPayload {
     const tipoApi = tipoDestinoUiToApi(this.formType);
     if (this.formType === 'google_drive') {
-      const idCarpeta = this.formFolderId.trim();
-      const serviceAccountEmail = this.formGoogleServiceAccountEmail.trim();
-      const privateKey = this.formGooglePrivateKey.trim();
-      if (!idCarpeta) {
-        this.toast.show('IDCarpeta (ID de carpeta) es obligatorio para Google Drive.', 'error');
-        return null;
-      }
-      if (!serviceAccountEmail || !privateKey) {
-        this.toast.show('Completa correo de la cuenta de servicio y clave privada para Google Drive.', 'error');
-        return null;
-      }
-      return { nombre, tipoApi, idCarpeta, serviceAccountEmail, privateKey };
+      return {
+        nombre,
+        tipoApi,
+        idCarpeta: this.formFolderId.trim(),
+        serviceAccountEmail: this.formGoogleServiceAccountEmail.trim(),
+        privateKey: this.formGooglePrivateKey.trim(),
+      };
     }
-    const bucketName = this.formBucket.trim();
-    const region = this.formRegion.trim();
-    const accessKeyId = this.formAccessKeyId.trim();
-    const secretAccessKey = this.formSecretAccessKey.trim();
-    if (!bucketName || !region) {
-      this.toast.show('Completa bucket y región para S3.', 'error');
-      return null;
-    }
-    if (!accessKeyId || !secretAccessKey) {
-      this.toast.show('Completa Access Key ID y Secret Access Key para S3.', 'error');
-      return null;
-    }
-    return { nombre, tipoApi, bucketName, region, accessKeyId, secretAccessKey };
+    return {
+      nombre,
+      tipoApi,
+      bucketName: this.formBucket.trim(),
+      region: this.formRegion.trim(),
+      accessKeyId: this.formAccessKeyId.trim(),
+      secretAccessKey: this.formSecretAccessKey.trim(),
+    };
   }
 
-  private tryBuildUpdatePayload(nombre: string, edit: DestinoRow): UpdateDestinoPayload | null {
+  private tryBuildUpdatePayload(nombre: string, edit: DestinoRow): UpdateDestinoPayload {
     const payload: UpdateDestinoPayload = {
       nombre,
       tipoApi: tipoDestinoUiToApi(this.formType),
@@ -264,14 +370,8 @@ export class DestinationsComponent implements OnInit {
       return payload;
     }
 
-    const bucketName = this.formBucket.trim();
-    const region = this.formRegion.trim();
-    if (!bucketName || !region) {
-      this.toast.show('Completa bucket y región para S3.', 'error');
-      return null;
-    }
-    payload.bucketName = bucketName;
-    payload.region = region;
+    payload.bucketName = this.formBucket.trim();
+    payload.region = this.formRegion.trim();
 
     const hadStoredAccessKey = (edit.accessKeyId ?? '').trim().length > 0;
     const accessKeyId = this.formAccessKeyId.trim();
@@ -279,14 +379,6 @@ export class DestinationsComponent implements OnInit {
 
     if (!accessKeyId && !hadStoredAccessKey) {
       return payload;
-    }
-    if (!accessKeyId) {
-      this.toast.show('Access Key ID es obligatorio para S3 con claves de acceso.', 'error');
-      return null;
-    }
-    if (!sk && !edit.secretAccessKeyConfigurada) {
-      this.toast.show('Secret Access Key es obligatorio al configurar claves por primera vez.', 'error');
-      return null;
     }
     payload.accessKeyId = accessKeyId;
     if (sk) payload.secretAccessKey = sk;

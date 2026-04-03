@@ -107,30 +107,41 @@
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label fw-500">Nombre</label>
+            <label class="form-label fw-500">Nombre <span class="text-danger" aria-hidden="true">*</span></label>
             <input
               type="text"
               class="form-control"
+              [class.is-invalid]="formNameError()"
               [(ngModel)]="formName"
+              (ngModelChange)="onFormNameInput()"
               placeholder="Ej: Preparar carpetas"
+              autocomplete="off"
             />
+            @if (formNameError()) {
+              <div class="invalid-feedback d-block">{{ formNameError() }}</div>
+            }
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-500">Tipo de script</label>
-            <select class="form-select" [(ngModel)]="formScriptType">
+            <label class="form-label fw-500">Tipo de script <span class="text-danger" aria-hidden="true">*</span></label>
+            <select
+              class="form-select"
+              [(ngModel)]="formScriptType"
+              (ngModelChange)="onFormScriptTypeChange()"
+            >
               @for (opt of allowedTypes; track opt.value) {
                 <option [value]="opt.value">{{ opt.label }}</option>
               }
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-500">Ruta del script</label>
+            <label class="form-label fw-500">Ruta del script <span class="text-danger" aria-hidden="true">*</span></label>
             <input
               type="text"
               class="form-control"
               [class.is-invalid]="formPathError()"
               [(ngModel)]="formScriptPath"
+              (ngModelChange)="onFormPathInput()"
               [placeholder]="formScriptType === 'ps1' ? 'C:\\Scripts\\mi-script.ps1' : formScriptType === 'bat' ? 'C:\\Scripts\\mi-script.bat' : 'C:\\Scripts\\mi-script.js'"
             />
             @if (formPathError()) {
