@@ -23,12 +23,15 @@
               <tr>
                 <th scope="col">Nombre</th>
                 <th scope="col">Tipo</th>
+                <th scope="col">Carpeta destino (S3 / Azure)</th>
                 <th scope="col">Bucket (AWS S3)</th>
                 <th scope="col">Región (AWS S3)</th>
                 <th scope="col">Access Key ID (AWS S3)</th>
                 <th scope="col">Secret Access Key (AWS S3)</th>
                 <th scope="col">Cuenta servicio (Google)</th>
                 <th scope="col">Private key (Google)</th>
+                <th scope="col">Contenedor (Azure)</th>
+                <th scope="col">Conexión (Azure)</th>
                 <th scope="col">IDCarpeta</th>
                 <th scope="col" class="text-end">Acciones</th>
               </tr>
@@ -39,6 +42,13 @@
                   <td class="fw-500">{{ d.name }}</td>
                   <td>
                     <span class="badge" [ngClass]="typeBadgeClass(d.type)">{{ typeLabel(d.type) }}</span>
+                  </td>
+                  <td>
+                    @if ((d.type === 's3' || d.type === 'azure_blob') && d.carpetaDestino) {
+                      <code class="small bg-light px-2 py-1 rounded">{{ d.carpetaDestino }}</code>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
                   </td>
                   <td>
                     @if (d.type === 's3' && d.bucketName) {
@@ -83,6 +93,20 @@
                     }
                   </td>
                   <td>
+                    @if (d.type === 'azure_blob' && d.azureBlobContainerName) {
+                      <code class="small bg-light px-2 py-1 rounded">{{ d.azureBlobContainerName }}</code>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (d.type === 'azure_blob' && d.azureBlobConnectionStringConfigurada) {
+                      <span class="text-muted small">Almacenada (cifrada)</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
                     @if (d.type === 'google_drive') {
                       <code class="small bg-light px-2 py-1 rounded">{{ d.idCarpeta || '—' }}</code>
                     } @else {
@@ -110,8 +134,8 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="10" class="text-center text-muted py-4">
-                    No hay destinos configurados. Añade uno (Amazon S3 o Google Drive) con «Nuevo destino».
+                  <td colspan="13" class="text-center text-muted py-4">
+                    No hay destinos configurados. Añade uno (Amazon S3, Azure Blob Storage o Google Drive) con «Nuevo destino».
                   </td>
                 </tr>
               }
@@ -157,6 +181,7 @@
             <label class="form-label fw-500">Tipo <span class="text-danger" aria-hidden="true">*</span></label>
             <select class="form-select" [(ngModel)]="formType" (ngModelChange)="onFormTypeChange()">
               <option value="s3">Amazon S3</option>
+              <option value="azure_blob">Azure Blob Storage</option>
               <option value="google_drive">Google Drive</option>
             </select>
           </div>
@@ -189,6 +214,24 @@
               @if (formRegionError()) {
                 <div class="invalid-feedback d-block">{{ formRegionError() }}</div>
               }
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-500">Carpeta destino en el bucket <span class="text-danger" aria-hidden="true">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="formCarpetaDestinoError()"
+                [(ngModel)]="formCarpetaDestino"
+                (ngModelChange)="onFormCarpetaDestinoInput()"
+                placeholder="respaldos/mi-proyecto"
+                autocomplete="off"
+              />
+              @if (formCarpetaDestinoError()) {
+                <div class="invalid-feedback d-block">{{ formCarpetaDestinoError() }}</div>
+              }
+              <p class="small text-muted mb-0 mt-1">
+                Prefijo dentro del bucket (como carpetas). Los archivos se suben bajo esta ruta; puedes usar varios niveles, p. ej. <code>año/2026</code>.
+              </p>
             </div>
             <div class="mb-3">
               <label class="form-label fw-500">
@@ -229,6 +272,64 @@
               @if (formSecretAccessKeyError()) {
                 <div class="invalid-feedback d-block">{{ formSecretAccessKeyError() }}</div>
               }
+            </div>
+          } @else if (formType === 'azure_blob') {
+            <p class="small text-muted mb-2">
+              Usa la cadena de conexión del portal de Azure (Storage account → Access keys o una SAS con permisos al contenedor). El contenedor debe existir y permitir lectura al validar y escritura al ejecutar backups.
+            </p>
+            <div class="mb-3">
+              <label class="form-label fw-500">Nombre del contenedor <span class="text-danger" aria-hidden="true">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="formAzureContainerError()"
+                [(ngModel)]="formAzureContainer"
+                (ngModelChange)="onFormAzureContainerInput()"
+                placeholder="micontenedor"
+                autocomplete="off"
+              />
+              @if (formAzureContainerError()) {
+                <div class="invalid-feedback d-block">{{ formAzureContainerError() }}</div>
+              }
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-500">Carpeta destino en el contenedor <span class="text-danger" aria-hidden="true">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="formCarpetaDestinoError()"
+                [(ngModel)]="formCarpetaDestino"
+                (ngModelChange)="onFormCarpetaDestinoInput()"
+                placeholder="respaldos/mi-proyecto"
+                autocomplete="off"
+              />
+              @if (formCarpetaDestinoError()) {
+                <div class="invalid-feedback d-block">{{ formCarpetaDestinoError() }}</div>
+              }
+              <p class="small text-muted mb-0 mt-1">
+                Prefijo virtual dentro del contenedor (los blobs se guardan con esta ruta como prefijo).
+              </p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-500">
+                Cadena de conexión
+                @if (!editingDest()) {
+                  <span class="text-danger" aria-hidden="true">*</span>
+                }
+              </label>
+              <textarea
+                class="form-control font-monospace small"
+                [class.is-invalid]="formAzureConnectionStringError()"
+                [(ngModel)]="formAzureConnectionString"
+                (ngModelChange)="onFormAzureConnectionStringInput()"
+                placeholder="DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net"
+                rows="3"
+                autocomplete="off"
+              ></textarea>
+              @if (formAzureConnectionStringError()) {
+                <div class="invalid-feedback d-block">{{ formAzureConnectionStringError() }}</div>
+              }
+              <p class="small text-muted mb-0 mt-1">Al editar, déjala vacía para conservar la cadena guardada (cifrada).</p>
             </div>
           } @else {
             <p class="small text-muted mb-2">Usa una cuenta de servicio de Google Cloud con acceso a Google Drive. Obtén el JSON en la consola de Google Cloud y extrae <code>client_email</code> y <code>private_key</code>.</p>
@@ -293,6 +394,11 @@
           @if (formType === 'google_drive') {
             <p class="small text-muted mb-0 mt-2">
               «Probar conexión» llama a la API: se validan la cuenta de servicio y el acceso a la carpeta en Google Drive. Al <strong>crear</strong> el destino se ejecuta la misma comprobación en el servidor.
+            </p>
+          }
+          @if (formType === 'azure_blob') {
+            <p class="small text-muted mb-0 mt-2">
+              «Probar conexión» comprueba la cadena de conexión y que el contenedor exista y sea accesible. Al <strong>crear</strong> o <strong>guardar</strong> se vuelve a validar en el servidor.
             </p>
           }
 

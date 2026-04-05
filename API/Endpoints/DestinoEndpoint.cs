@@ -24,6 +24,9 @@ public static class DestinoEndpoint
         group.MapPost("/validar-s3", ValidarS3)
             .WithName("ValidarS3");
 
+        group.MapPost("/validar-azure-blob", ValidarAzureBlob)
+            .WithName("ValidarAzureBlob");
+
         group.MapPut("/{id:int}", UpdateDestino)
             .WithName("UpdateDestino");
 
@@ -64,6 +67,15 @@ public static class DestinoEndpoint
         CancellationToken cancellationToken)
     {
         var res = await destinoService.ValidarConexionS3Async(request, cancellationToken);
+        return Results.Ok(res);
+    }
+
+    private static async Task<IResult> ValidarAzureBlob(
+        ValidarAzureBlobRequest request,
+        IDestinoService destinoService,
+        CancellationToken cancellationToken)
+    {
+        var res = await destinoService.ValidarConexionAzureBlobAsync(request, cancellationToken);
         return Results.Ok(res);
     }
 

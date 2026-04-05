@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Azure;
+using Azure.Storage.Blobs;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
@@ -75,6 +77,9 @@ public class DestinoService : IDestinoService
         var s3Region = string.Empty;
         var googleServiceEmail = string.Empty;
         var googlePrivateEnc = string.Empty;
+        var azureContainer = string.Empty;
+        var azureConnEnc = string.Empty;
+        var carpetaDestino = string.Empty;
 
         if (tipo == DestinoTipos.S3)
         {
@@ -99,6 +104,10 @@ public class DestinoService : IDestinoService
                 bucketName = request.BucketName.Trim();
                 s3Region = request.Region.Trim();
             }
+
+            carpetaDestino = CloudCarpetaDestino.NormalizePrefijo(request.CarpetaDestino);
+            if (string.IsNullOrEmpty(carpetaDestino))
+                throw new BadRequestException("carpetaDestino es obligatoria para Amazon S3.");
         }
         else if (tipo == DestinoTipos.GoogleDrive)
         {
@@ -114,6 +123,21 @@ public class DestinoService : IDestinoService
             googleServiceEmail = request.ServiceAccountEmail.Trim();
             googlePrivateEnc = _credentialProtector.Protect(request.PrivateKey.Trim());
         }
+        else if (tipo == DestinoTipos.AzureBlob)
+        {
+            if (string.IsNullOrWhiteSpace(request.AzureBlobContainerName))
+                throw new BadRequestException("azureBlobContainerName es obligatorio para Azure Blob Storage.");
+            if (string.IsNullOrWhiteSpace(request.AzureBlobConnectionString))
+                throw new BadRequestException("azureBlobConnectionString es obligatorio para Azure Blob Storage.");
+            var ac = request.AzureBlobContainerName.Trim();
+            var aconn = request.AzureBlobConnectionString.Trim();
+            await ValidarAzureBlobCredencialesAsync(aconn, ac, CancellationToken.None);
+            azureContainer = ac;
+            azureConnEnc = _credentialProtector.Protect(aconn);
+            carpetaDestino = CloudCarpetaDestino.NormalizePrefijo(request.CarpetaDestino);
+            if (string.IsNullOrEmpty(carpetaDestino))
+                throw new BadRequestException("carpetaDestino es obligatoria para Azure Blob Storage.");
+        }
 
         var entity = new Destino
         {
@@ -126,7 +150,10 @@ public class DestinoService : IDestinoService
             BucketName = bucketName,
             S3Region = s3Region,
             GoogleServiceAccountEmail = googleServiceEmail,
-            GooglePrivateKey = googlePrivateEnc
+            GooglePrivateKey = googlePrivateEnc,
+            AzureBlobContainerName = azureContainer,
+            AzureBlobConnectionString = azureConnEnc,
+            CarpetaDestino = carpetaDestino
         };
         _context.Destinos.Add(entity);
         await _context.SaveChangesAsync();
@@ -156,24 +183,61 @@ public class DestinoService : IDestinoService
             ApplyS3CredentialsFromPatch(entity, request);
         else if (HasGoogleCredentialPatch(request) && entity.TipoDeDestino == DestinoTipos.GoogleDrive)
             ApplyGoogleCredentialsFromPatch(entity, request);
+        else if (HasAzureCredentialPatch(request) && entity.TipoDeDestino == DestinoTipos.AzureBlob)
+            ApplyAzureCredentialsFromPatch(entity, request);
 
         if (request.IdCarpeta is not null)
             entity.IdCarpeta = request.IdCarpeta.Trim();
+
+        if (request.CarpetaDestino is not null
+            && (entity.TipoDeDestino == DestinoTipos.S3 || entity.TipoDeDestino == DestinoTipos.AzureBlob))
+        {
+            var p = CloudCarpetaDestino.NormalizePrefijo(request.CarpetaDestino);
+            if (string.IsNullOrEmpty(p))
+                throw new BadRequestException("carpetaDestino no puede estar vacía para S3 ni Azure Blob Storage.");
+            entity.CarpetaDestino = p;
+        }
 
         if (entity.TipoDeDestino == DestinoTipos.S3)
         {
             entity.IdCarpeta = string.Empty;
             entity.GoogleServiceAccountEmail = string.Empty;
             entity.GooglePrivateKey = string.Empty;
+            entity.AzureBlobContainerName = string.Empty;
+            entity.AzureBlobConnectionString = string.Empty;
+            if (string.IsNullOrWhiteSpace(entity.CarpetaDestino))
+                throw new BadRequestException("carpetaDestino es obligatoria para Amazon S3.");
         }
-        else
+        else if (entity.TipoDeDestino == DestinoTipos.GoogleDrive)
         {
             entity.AccessKeyId = string.Empty;
             entity.SecretAccessKey = string.Empty;
             entity.BucketName = string.Empty;
             entity.S3Region = string.Empty;
+            entity.AzureBlobContainerName = string.Empty;
+            entity.AzureBlobConnectionString = string.Empty;
+            entity.CarpetaDestino = string.Empty;
             if (string.IsNullOrWhiteSpace(entity.IdCarpeta))
                 throw new BadRequestException("idCarpeta es obligatorio para Google Drive.");
+        }
+        else if (entity.TipoDeDestino == DestinoTipos.AzureBlob)
+        {
+            entity.IdCarpeta = string.Empty;
+            entity.AccessKeyId = string.Empty;
+            entity.SecretAccessKey = string.Empty;
+            entity.BucketName = string.Empty;
+            entity.S3Region = string.Empty;
+            entity.GoogleServiceAccountEmail = string.Empty;
+            entity.GooglePrivateKey = string.Empty;
+            if (string.IsNullOrWhiteSpace(entity.AzureBlobContainerName))
+                throw new BadRequestException("azureBlobContainerName es obligatorio para Azure Blob Storage.");
+            if (string.IsNullOrWhiteSpace(entity.CarpetaDestino))
+                throw new BadRequestException("carpetaDestino es obligatoria para Azure Blob Storage.");
+            var azureConn = GetAzureConnectionStringPlaintextOrThrow(entity);
+            await ValidarAzureBlobCredencialesAsync(
+                azureConn,
+                entity.AzureBlobContainerName.Trim(),
+                CancellationToken.None);
         }
 
         if (entity.TipoDeDestino == DestinoTipos.GoogleDrive)
@@ -293,6 +357,60 @@ public class DestinoService : IDestinoService
         return new S3ValidacionResponse(mensaje, bucket, identityArn);
     }
 
+    public async Task<AzureBlobValidacionResponse> ValidarConexionAzureBlobAsync(
+        ValidarAzureBlobRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.AzureBlobContainerName))
+            throw new BadRequestException("azureBlobContainerName es obligatorio.");
+        if (string.IsNullOrWhiteSpace(request.AzureBlobConnectionString))
+            throw new BadRequestException("azureBlobConnectionString es obligatorio.");
+        var container = request.AzureBlobContainerName.Trim();
+        var conn = request.AzureBlobConnectionString.Trim();
+        return await ValidarAzureBlobCredencialesAsync(conn, container, cancellationToken);
+    }
+
+    private static async Task<AzureBlobValidacionResponse> ValidarAzureBlobCredencialesAsync(
+        string connectionString,
+        string containerName,
+        CancellationToken cancellationToken)
+    {
+        BlobServiceClient service;
+        try
+        {
+            service = new BlobServiceClient(connectionString);
+        }
+        catch (Exception ex)
+        {
+            throw new BadRequestException($"Cadena de conexión de Azure no válida: {ex.Message}");
+        }
+
+        var container = service.GetBlobContainerClient(containerName);
+        try
+        {
+            await container.GetPropertiesAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (RequestFailedException ex)
+        {
+            throw new BadRequestException(DescribeAzureBlobFailure(ex));
+        }
+
+        return new AzureBlobValidacionResponse(
+            $"Conexión correcta con el contenedor «{containerName}».",
+            containerName);
+    }
+
+    private static string DescribeAzureBlobFailure(RequestFailedException ex)
+    {
+        if (ex.Status == 403)
+            return "Acceso denegado al contenedor. Revisa la cadena de conexión y permisos (p. ej. rol de colaborador de datos de almacenamiento o SAS con lectura).";
+        if (ex.Status == 404)
+            return "El contenedor no existe o el nombre es incorrecto.";
+        if (ex.ErrorCode is { Length: > 0 } code)
+            return $"Azure Storage respondió ({code}): {ex.Message}";
+        return $"Azure Storage respondió: {ex.Message}";
+    }
+
     private static async Task<string?> TryGetCallerIdentityArnAsync(
         AWSCredentials? credentials,
         RegionEndpoint regionEndpoint,
@@ -363,7 +481,7 @@ public class DestinoService : IDestinoService
         var service = new DriveService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,
-            ApplicationName = "evocative-lodge-415320",
+            ApplicationName = "portafolio-v-1-2",
         });
 
         File meta;
@@ -445,6 +563,9 @@ public class DestinoService : IDestinoService
         d.S3Region,
         d.GoogleServiceAccountEmail,
         privateKeyGoogleAlmacenada = !string.IsNullOrEmpty(d.GooglePrivateKey),
+        d.AzureBlobContainerName,
+        azureConnectionStringAlmacenada = !string.IsNullOrEmpty(d.AzureBlobConnectionString),
+        d.CarpetaDestino,
         d.FechaCreacion,
         d.FechaModificacion
     };
@@ -460,6 +581,9 @@ public class DestinoService : IDestinoService
         d.S3Region,
         d.GoogleServiceAccountEmail,
         !string.IsNullOrEmpty(d.GooglePrivateKey),
+        d.AzureBlobContainerName,
+        !string.IsNullOrEmpty(d.AzureBlobConnectionString),
+        d.CarpetaDestino,
         d.FechaCreacion,
         d.FechaModificacion
     );
@@ -487,7 +611,8 @@ public class DestinoService : IDestinoService
 
         var t = tipo.Trim();
         if (!DestinoTipos.Allowed.Contains(t))
-            throw new BadRequestException($"tipo debe ser '{DestinoTipos.S3}' o '{DestinoTipos.GoogleDrive}'.");
+            throw new BadRequestException(
+                $"tipo debe ser '{DestinoTipos.S3}', '{DestinoTipos.GoogleDrive}' o '{DestinoTipos.AzureBlob}'.");
 
         return t;
     }
@@ -505,10 +630,15 @@ public class DestinoService : IDestinoService
     private static bool HasGoogleCredentialPatch(UpdateDestinoRequest r) =>
         r.ServiceAccountEmail != null || r.PrivateKey != null;
 
+    private static bool HasAzureCredentialPatch(UpdateDestinoRequest r) =>
+        r.AzureBlobContainerName != null || r.AzureBlobConnectionString != null;
+
     private void ApplyS3CredentialsFromPatch(Destino entity, UpdateDestinoRequest r)
     {
         entity.GoogleServiceAccountEmail = string.Empty;
         entity.GooglePrivateKey = string.Empty;
+        entity.AzureBlobContainerName = string.Empty;
+        entity.AzureBlobConnectionString = string.Empty;
 
         var bucketTouched = r.BucketName != null;
         var regionTouched = r.Region != null;
@@ -578,6 +708,9 @@ public class DestinoService : IDestinoService
         entity.SecretAccessKey = string.Empty;
         entity.BucketName = string.Empty;
         entity.S3Region = string.Empty;
+        entity.AzureBlobContainerName = string.Empty;
+        entity.AzureBlobConnectionString = string.Empty;
+        entity.CarpetaDestino = string.Empty;
 
         if (r.ServiceAccountEmail != null)
             entity.GoogleServiceAccountEmail = r.ServiceAccountEmail.Trim();
@@ -589,6 +722,44 @@ public class DestinoService : IDestinoService
         }
 
         entity.Credenciales = _credentialProtector.Protect("{}");
+    }
+
+    private void ApplyAzureCredentialsFromPatch(Destino entity, UpdateDestinoRequest r)
+    {
+        entity.AccessKeyId = string.Empty;
+        entity.SecretAccessKey = string.Empty;
+        entity.BucketName = string.Empty;
+        entity.S3Region = string.Empty;
+        entity.GoogleServiceAccountEmail = string.Empty;
+        entity.GooglePrivateKey = string.Empty;
+        entity.IdCarpeta = string.Empty;
+
+        if (r.AzureBlobContainerName != null)
+            entity.AzureBlobContainerName = r.AzureBlobContainerName.Trim();
+        if (r.AzureBlobConnectionString != null)
+        {
+            entity.AzureBlobConnectionString = string.IsNullOrWhiteSpace(r.AzureBlobConnectionString)
+                ? string.Empty
+                : _credentialProtector.Protect(r.AzureBlobConnectionString.Trim());
+        }
+
+        entity.Credenciales = _credentialProtector.Protect("{}");
+    }
+
+    private string GetAzureConnectionStringPlaintextOrThrow(Destino entity)
+    {
+        if (string.IsNullOrWhiteSpace(entity.AzureBlobConnectionString))
+            throw new BadRequestException(
+                "azureBlobConnectionString es obligatoria para Azure Blob Storage (vuelve a pegar la cadena si editaste el destino).");
+        try
+        {
+            return _credentialProtector.Unprotect(entity.AzureBlobConnectionString);
+        }
+        catch (CryptographicException)
+        {
+            throw new BadRequestException(
+                "No se pudo descifrar la cadena de conexión almacenada. Guarda de nuevo el destino.");
+        }
     }
 
     private static string BuildS3KeysCredencialesJson(string accessKeyId) =>

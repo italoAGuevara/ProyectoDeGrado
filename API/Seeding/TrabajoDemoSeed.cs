@@ -15,7 +15,8 @@ public static class TrabajoDemoSeed
             {
                 Nombre = "Destino demo S3",
                 TipoDeDestino = "S3",
-                Credenciales = credentialProtector.Protect("{}")
+                Credenciales = credentialProtector.Protect("{}"),
+                CarpetaDestino = "demo-respaldos/"
             });
             db.SaveChanges();
         }

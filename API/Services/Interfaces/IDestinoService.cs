@@ -17,4 +17,8 @@ public interface IDestinoService
     Task<S3ValidacionResponse> ValidarConexionS3Async(
         ValidarS3Request request,
         CancellationToken cancellationToken = default);
+
+    Task<AzureBlobValidacionResponse> ValidarConexionAzureBlobAsync(
+        ValidarAzureBlobRequest request,
+        CancellationToken cancellationToken = default);
 }

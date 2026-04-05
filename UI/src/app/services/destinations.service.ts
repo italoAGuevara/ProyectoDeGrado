@@ -5,7 +5,7 @@ import { unwrapApiDetails } from '../utils/api-response.util';
 import { messageFromHttpError } from '../utils/http-error.util';
 import { ToastService } from './toast.service';
 
-export type DestinationType = 's3' | 'google_drive';
+export type DestinationType = 's3' | 'google_drive' | 'azure_blob';
 
 export interface DestinoRow {
   id: number;
@@ -18,6 +18,9 @@ export interface DestinoRow {
   region: string;
   serviceAccountEmail: string;
   privateKeyConfigurada: boolean;
+  azureBlobContainerName: string;
+  azureBlobConnectionStringConfigurada: boolean;
+  carpetaDestino: string;
 }
 
 interface DestinoApiDto {
@@ -31,16 +34,23 @@ interface DestinoApiDto {
   region: string;
   serviceAccountEmail: string;
   privateKeyConfigurada: boolean;
+  azureBlobContainerName?: string;
+  azureBlobConnectionStringConfigurada?: boolean;
+  carpetaDestino?: string;
 }
 
 const API_DESTINOS = '/api/destinos';
 
 export function tipoDestinoApiToUi(tipo: string): DestinationType {
-  return tipo === 'GoogleDrive' ? 'google_drive' : 's3';
+  if (tipo === 'GoogleDrive') return 'google_drive';
+  if (tipo === 'AzureBlob') return 'azure_blob';
+  return 's3';
 }
 
 export function tipoDestinoUiToApi(t: DestinationType): string {
-  return t === 'google_drive' ? 'GoogleDrive' : 'S3';
+  if (t === 'google_drive') return 'GoogleDrive';
+  if (t === 'azure_blob') return 'AzureBlob';
+  return 'S3';
 }
 
 export interface CreateDestinoPayload {
@@ -53,6 +63,9 @@ export interface CreateDestinoPayload {
   secretAccessKey?: string;
   serviceAccountEmail?: string;
   privateKey?: string;
+  azureBlobContainerName?: string;
+  azureBlobConnectionString?: string;
+  carpetaDestino?: string;
 }
 
 export interface UpdateDestinoPayload {
@@ -65,6 +78,9 @@ export interface UpdateDestinoPayload {
   secretAccessKey?: string;
   serviceAccountEmail?: string;
   privateKey?: string;
+  azureBlobContainerName?: string;
+  azureBlobConnectionString?: string;
+  carpetaDestino?: string;
 }
 
 export interface GoogleDriveValidacionDto {
@@ -76,6 +92,11 @@ export interface S3ValidacionDto {
   mensaje: string;
   bucket?: string | null;
   identityArn?: string | null;
+}
+
+export interface AzureBlobValidacionDto {
+  mensaje: string;
+  containerName?: string | null;
 }
 
 @Injectable({
@@ -204,6 +225,9 @@ export class DestinationsService {
     this.assignIfDefined(body, 'secretAccessKey', p.secretAccessKey);
     this.assignIfDefined(body, 'serviceAccountEmail', p.serviceAccountEmail);
     this.assignIfDefined(body, 'privateKey', p.privateKey);
+    this.assignIfDefined(body, 'azureBlobContainerName', p.azureBlobContainerName);
+    this.assignIfDefined(body, 'azureBlobConnectionString', p.azureBlobConnectionString);
+    this.assignIfDefined(body, 'carpetaDestino', p.carpetaDestino);
     return body;
   }
 
@@ -218,7 +242,25 @@ export class DestinationsService {
     this.assignIfDefined(body, 'secretAccessKey', p.secretAccessKey);
     this.assignIfDefined(body, 'serviceAccountEmail', p.serviceAccountEmail);
     this.assignIfDefined(body, 'privateKey', p.privateKey);
+    this.assignIfDefined(body, 'azureBlobContainerName', p.azureBlobContainerName);
+    this.assignIfDefined(body, 'azureBlobConnectionString', p.azureBlobConnectionString);
+    this.assignIfDefined(body, 'carpetaDestino', p.carpetaDestino);
     return body;
+  }
+
+  validarAzureBlob(body: {
+    azureBlobContainerName: string;
+    azureBlobConnectionString: string;
+  }): Observable<AzureBlobValidacionDto> {
+    return this.http
+      .post<unknown>(`${API_DESTINOS}/validar-azure-blob`, {
+        azureBlobContainerName: body.azureBlobContainerName.trim(),
+        azureBlobConnectionString: body.azureBlobConnectionString,
+      })
+      .pipe(
+        map((res) => unwrapApiDetails<AzureBlobValidacionDto>(res)),
+        catchError((err) => throwError(() => err))
+      );
   }
 
   private assignIfDefined(body: Record<string, unknown>, key: string, value: string | undefined): void {
@@ -237,6 +279,9 @@ export class DestinationsService {
       region: d.region ?? '',
       serviceAccountEmail: d.serviceAccountEmail ?? '',
       privateKeyConfigurada: !!d.privateKeyConfigurada,
+      azureBlobContainerName: d.azureBlobContainerName ?? '',
+      azureBlobConnectionStringConfigurada: !!d.azureBlobConnectionStringConfigurada,
+      carpetaDestino: d.carpetaDestino ?? '',
     };
   }
 }

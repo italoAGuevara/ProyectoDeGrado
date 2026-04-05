@@ -27,7 +27,19 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AzureBlobConnectionString")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AzureBlobContainerName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("BucketName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CarpetaDestino")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

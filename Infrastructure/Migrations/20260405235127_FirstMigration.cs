@@ -27,6 +27,9 @@ namespace Infrastructure.Migrations
                     S3Region = table.Column<string>(type: "TEXT", nullable: false),
                     GoogleServiceAccountEmail = table.Column<string>(type: "TEXT", nullable: false),
                     GooglePrivateKey = table.Column<string>(type: "TEXT", nullable: false),
+                    AzureBlobContainerName = table.Column<string>(type: "TEXT", nullable: false),
+                    AzureBlobConnectionString = table.Column<string>(type: "TEXT", nullable: false),
+                    CarpetaDestino = table.Column<string>(type: "TEXT", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "TEXT", nullable: false),
                     FechaModificacion = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },

@@ -21,6 +21,12 @@ namespace HostedService.Entities
         public string GoogleServiceAccountEmail { get; set; } = string.Empty;
         /// <summary>Clave privada de la cuenta de servicio, protegida con Data Protection (solo Google Drive).</summary>
         public string GooglePrivateKey { get; set; } = string.Empty;
+        /// <summary>Nombre del contenedor de Azure Blob Storage.</summary>
+        public string AzureBlobContainerName { get; set; } = string.Empty;
+        /// <summary>Cadena de conexión de Azure Storage, protegida con Data Protection (solo Azure Blob).</summary>
+        public string AzureBlobConnectionString { get; set; } = string.Empty;
+        /// <summary>Prefijo de carpeta lógica dentro del bucket S3 o del contenedor Azure (p. ej. respaldos/app/). Vacío en Google Drive.</summary>
+        public string CarpetaDestino { get; set; } = string.Empty;
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
         public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
     }

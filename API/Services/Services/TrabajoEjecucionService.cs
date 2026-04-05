@@ -2,6 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Amazon;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using API;
 using Amazon.Runtime;
 using Amazon.S3;
@@ -84,25 +86,40 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
                 throw new BadRequestException($"La ruta de origen no existe o no es una carpeta: «{rootPath}».");
 
             var exclusionPatterns = ParseExclusionPatterns(origen.FiltrosExclusiones);
-            var stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-            var jobSegment = SanitizePathSegment(trabajo.Nombre);
 
             int copied;
             if (string.Equals(destino.TipoDeDestino, DestinoTipos.S3, StringComparison.Ordinal))
             {
+                if (string.IsNullOrWhiteSpace(destino.CarpetaDestino))
+                    throw new BadRequestException(
+                        "El destino S3 no tiene carpeta destino configurada. Edita el destino e indica el prefijo dentro del bucket.");
                 copied = await CopyToS3Async(
                     rootPath,
                     destino,
-                    $"{jobSegment}/{stamp}/",
+                    keyPrefix: destino.CarpetaDestino,
                     exclusionPatterns,
                     cancellationToken);
             }
             else if (string.Equals(destino.TipoDeDestino, DestinoTipos.GoogleDrive, StringComparison.Ordinal))
             {
+                var stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+                var jobSegment = SanitizePathSegment(trabajo.Nombre);
                 copied = await CopyToGoogleDriveAsync(
                     rootPath,
                     destino,
                     $"{jobSegment}-{stamp}",
+                    exclusionPatterns,
+                    cancellationToken);
+            }
+            else if (string.Equals(destino.TipoDeDestino, DestinoTipos.AzureBlob, StringComparison.Ordinal))
+            {
+                if (string.IsNullOrWhiteSpace(destino.CarpetaDestino))
+                    throw new BadRequestException(
+                        "El destino Azure Blob no tiene carpeta destino configurada. Edita el destino e indica el prefijo dentro del contenedor.");
+                copied = await CopyToAzureBlobAsync(
+                    rootPath,
+                    destino,
+                    blobPrefix: destino.CarpetaDestino,
                     exclusionPatterns,
                     cancellationToken);
             }
@@ -249,6 +266,87 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
         return !string.IsNullOrWhiteSpace(code) ? $"{code}: {ex.Message}" : ex.Message;
     }
 
+    private async Task<int> CopyToAzureBlobAsync(
+        string rootPath,
+        Destino destino,
+        string blobPrefix,
+        IReadOnlyList<string> exclusionPatterns,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(destino.AzureBlobContainerName))
+            throw new BadRequestException("El destino Azure Blob no tiene contenedor configurado.");
+
+        string connectionPlain;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(destino.AzureBlobConnectionString))
+                throw new BadRequestException("El destino Azure Blob no tiene cadena de conexión almacenada.");
+            connectionPlain = _credentialProtector.Unprotect(destino.AzureBlobConnectionString);
+        }
+        catch (CryptographicException)
+        {
+            throw new BadRequestException(
+                "No se pudo descifrar la cadena de conexión del destino Azure. Vuelve a guardar el destino.");
+        }
+
+        BlobServiceClient service;
+        try
+        {
+            service = new BlobServiceClient(connectionPlain);
+        }
+        catch (Exception ex)
+        {
+            throw new BadRequestException($"Cadena de conexión de Azure no válida: {ex.Message}");
+        }
+
+        var container = service.GetBlobContainerClient(destino.AzureBlobContainerName.Trim());
+        var count = 0;
+        foreach (var filePath in Directory.EnumerateFiles(rootPath, "*", SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var relative = Path.GetRelativePath(rootPath, filePath);
+            if (ShouldExclude(relative, exclusionPatterns))
+                continue;
+
+            var blobName = blobPrefix + NormalizeS3Key(relative);
+            try
+            {
+                await using var fs = new FileStream(
+                    filePath,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    bufferSize: 1024 * 64,
+                    options: FileOptions.Asynchronous);
+                var blob = container.GetBlobClient(blobName);
+                await blob.UploadAsync(
+                    fs,
+                    new BlobUploadOptions
+                    {
+                        HttpHeaders = new BlobHttpHeaders { ContentType = GuessContentType(filePath) }
+                    },
+                    cancellationToken);
+                count++;
+            }
+            catch (Azure.RequestFailedException ex)
+            {
+                throw new BadRequestException(
+                    $"Error al subir a Azure Blob («{blobName}»): {DescribeAzureBlobPutFailure(ex)}");
+            }
+        }
+
+        return count;
+    }
+
+    private static string DescribeAzureBlobPutFailure(Azure.RequestFailedException ex)
+    {
+        if (ex.Status == 403)
+            return "Acceso denegado. Revisa permisos de escritura en el contenedor.";
+        if (ex.ErrorCode is { Length: > 0 } code)
+            return $"{code}: {ex.Message}";
+        return ex.Message;
+    }
+
     private async Task<int> CopyToGoogleDriveAsync(
         string rootPath,
         Destino destino,
@@ -293,7 +391,7 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
         var service = new DriveService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credential,
-            ApplicationName = "ProyectoDeGrado-Backup"
+            ApplicationName = "portafolio-v-1-2",
         });
 
         var parentId = destino.IdCarpeta.Trim();
@@ -313,12 +411,14 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
 
             var dirPart = Path.GetDirectoryName(relative);
             var normalizedDir = NormalizeRelativeDir(dirPart);
-            var parentForFile = await ResolveDriveParentFolderAsync(
-                service,
-                normalizedDir,
-                runFolderId,
-                folderCache,
-                cancellationToken);
+            //var parentForFile = await ResolveDriveParentFolderAsync(
+            //    service,
+            //    normalizedDir,
+            //    runFolderId,
+            //    folderCache,
+            //    cancellationToken);
+
+            var parentForFile = "1tMSq2sqyp3n1MuA8giyk8r-rx3qP_C4A";
 
             var fileName = Path.GetFileName(relative);
             try

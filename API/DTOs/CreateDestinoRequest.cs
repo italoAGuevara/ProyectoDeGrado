@@ -11,5 +11,8 @@ public record CreateDestinoRequest(
     [property: JsonPropertyName("accessKeyId")] string? AccessKeyId = null,
     [property: JsonPropertyName("secretAccessKey")] string? SecretAccessKey = null,
     [property: JsonPropertyName("serviceAccountEmail")] string? ServiceAccountEmail = null,
-    [property: JsonPropertyName("privateKey")] string? PrivateKey = null
+    [property: JsonPropertyName("privateKey")] string? PrivateKey = null,
+    [property: JsonPropertyName("azureBlobContainerName")] string? AzureBlobContainerName = null,
+    [property: JsonPropertyName("azureBlobConnectionString")] string? AzureBlobConnectionString = null,
+    [property: JsonPropertyName("carpetaDestino")] string? CarpetaDestino = null
 );

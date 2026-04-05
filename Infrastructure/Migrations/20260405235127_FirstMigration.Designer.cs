@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260405210220_FirstMigration")]
+    [Migration("20260405235127_FirstMigration")]
     partial class FirstMigration
     {
         /// <inheritdoc />
@@ -30,7 +30,19 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AzureBlobConnectionString")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AzureBlobContainerName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("BucketName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CarpetaDestino")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

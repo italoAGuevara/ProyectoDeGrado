@@ -13,6 +13,9 @@ public record DestinoResponse(
     [property: JsonPropertyName("region")] string Region,
     [property: JsonPropertyName("serviceAccountEmail")] string ServiceAccountEmail,
     [property: JsonPropertyName("privateKeyConfigurada")] bool PrivateKeyConfigurada,
+    [property: JsonPropertyName("azureBlobContainerName")] string AzureBlobContainerName,
+    [property: JsonPropertyName("azureBlobConnectionStringConfigurada")] bool AzureBlobConnectionStringConfigurada,
+    [property: JsonPropertyName("carpetaDestino")] string CarpetaDestino,
     [property: JsonPropertyName("fechaCreacion")] DateTime FechaCreacion,
     [property: JsonPropertyName("fechaModificacion")] DateTime FechaModificacion
 );
