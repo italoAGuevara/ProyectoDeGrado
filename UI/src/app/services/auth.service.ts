@@ -70,6 +70,30 @@ export class AuthService {
   }
 
   /**
+   * Comprueba el claim `exp` del JWT (sin validar firma).
+   * Si el token no es un JWT con `exp` numérico, se considera vencido.
+   */
+  isAccessTokenExpired(token: string): boolean {
+    const exp = this.readJwtExpSeconds(token);
+    if (exp === null) return true;
+    return Date.now() / 1000 >= exp;
+  }
+
+  private readJwtExpSeconds(token: string): number | null {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    try {
+      let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = b64.length % 4;
+      if (pad) b64 += '='.repeat(4 - pad);
+      const payload = JSON.parse(atob(b64)) as { exp?: unknown };
+      return typeof payload.exp === 'number' ? payload.exp : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Contraseña recordada para rellenar el formulario de login (solo si hubo login exitoso con «Recordar contraseña»).
    */
   getSavedPasswordForLoginForm(): string | null {
