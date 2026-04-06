@@ -1,57 +1,51 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using HostedService.Scheduling;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace HostedService
+namespace HostedService;
+
+public class Robot : BackgroundService
 {
-    public class Robot : BackgroundService
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<Robot> _logger;
+    private static readonly TimeSpan Intervalo = TimeSpan.FromMinutes(1);
+
+    public Robot(IServiceScopeFactory scopeFactory, ILogger<Robot> logger)
     {
-        private readonly ILogger<Robot> _logger;
-        private readonly TimeSpan _intervalo = TimeSpan.FromSeconds(10);
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
 
-        public Robot(ILogger<Robot> logger)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Robot iniciado: revisión de trabajos por cron cada {Minutos} minuto(s).", Intervalo.TotalMinutes);
+
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _logger = logger;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            _logger.LogInformation("Robot starting...");
-
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
-                {
-                    _logger.LogInformation("Robot executing task in background: {time}", DateTimeOffset.Now);
-
-                    // here starts main logic of the robot
-                    await Process();
-                }
-                catch (TaskCanceledException)
-                {
-                    // Log as information instead of error when the task is canceled
-                    _logger.LogInformation("Robot task was canceled.");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Robot error executing task in background.");
-                }
-
-                try
-                {
-                    await Task.Delay(_intervalo, stoppingToken);
-                }
-                catch (TaskCanceledException)
-                {
-                    // Handle cancellation during delay
-                    _logger.LogInformation("Robot delay was canceled.");
-                }
+                await using var scope = _scopeFactory.CreateAsyncScope();
+                var handler = scope.ServiceProvider.GetRequiredService<ITrabajoCronTickHandler>();
+                await handler.ProcessDueJobsAsync(stoppingToken);
             }
-        }
+            catch (TaskCanceledException)
+            {
+                _logger.LogInformation("Robot: tarea cancelada.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Robot: error al procesar trabajos programados.");
+            }
 
-        private Task Process()
-        {
-            
-            return Task.CompletedTask;
+            try
+            {
+                await Task.Delay(Intervalo, stoppingToken);
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.LogInformation("Robot: espera cancelada.");
+            }
         }
     }
 }

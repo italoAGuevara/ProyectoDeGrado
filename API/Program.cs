@@ -13,7 +13,9 @@ using Serilog;
 using System.Reflection;
 using System.Text;
 using API.Seeding;
+using API.Services.Scheduling;
 using API.Services.Services;
+using HostedService.Scheduling;
 
 
 string _cors = "all";
@@ -87,6 +89,9 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddHostedService<Robot>();
+
+builder.Services.AddSingleton<ICronMinutoEjecucionTracker, CronMinutoEjecucionTracker>();
+builder.Services.AddScoped<ITrabajoCronTickHandler, TrabajoCronTickHandler>();
 
 builder.Services.AddTransient<ILogin, LoginService>();
 builder.Services.AddScoped<IScriptsService, ScriptsService>();
