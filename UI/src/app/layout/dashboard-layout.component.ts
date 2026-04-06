@@ -1,15 +1,11 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, OnInit, signal, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ScriptsService } from '../services/scripts.service';
-
-export interface LayoutNotification {
-  id: string;
-  title: string;
-  message: string;
-  date: string;
-  read: boolean;
-}
+import {
+  BellNotificationsService,
+  BellNotification,
+} from '../services/bell-notifications.service';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -21,26 +17,21 @@ export interface LayoutNotification {
 export class DashboardLayoutComponent implements OnInit {
   private authService = inject(AuthService);
   private scriptsService = inject(ScriptsService);
+  private router = inject(Router);
+  protected bell = inject(BellNotificationsService);
   sidebarOpen = signal(false);
   notificationsOpen = signal(false);
 
   ngOnInit(): void {
     if (this.authService.getToken()) {
       this.scriptsService.loadAll();
+      this.bell.refresh();
     }
   }
 
   logout(): void {
     this.authService.logout();
   }
-
-  /** Notificaciones; en el futuro puede venir de un NotificationService */
-  notifications = signal<LayoutNotification[]>([
-    { id: '1', title: 'Trabajo completado', message: 'Backup diario documentos finalizó correctamente.', date: 'Hace 2 h', read: false },
-    { id: '2', title: 'Recordatorio', message: 'Revisa los destinos configurados.', date: 'Ayer', read: true },
-  ]);
-
-  unreadCount = computed(() => this.notifications().filter((n) => !n.read).length);
 
   toggleSidebar(): void {
     this.sidebarOpen.update((v) => !v);
@@ -51,16 +42,22 @@ export class DashboardLayoutComponent implements OnInit {
   }
 
   toggleNotifications(): void {
-    this.notificationsOpen.update((v) => !v);
+    this.notificationsOpen.update((v) => {
+      const next = !v;
+      if (next) this.bell.refresh();
+      return next;
+    });
   }
 
   closeNotifications(): void {
     this.notificationsOpen.set(false);
   }
 
-  markAsRead(n: LayoutNotification): void {
-    this.notifications.update((list) =>
-      list.map((item) => (item.id === n.id ? { ...item, read: true } : item))
-    );
+  markAsRead(n: BellNotification): void {
+    this.bell.markAsRead(n);
+    if (n.link) {
+      this.router.navigateByUrl(n.link);
+      this.closeNotifications();
+    }
   }
 }

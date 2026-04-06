@@ -123,8 +123,8 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
               <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628.134 2.197.459 3.742.16.767.376 1.566.663 2.258h10.244c.287-.692.502-1.49.663-2.258C12.866 8.197 13 6.628 13 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1h12.44z"/>
             </svg>
-            @if (unreadCount() > 0) {
-              <span class="notifications-badge" aria-hidden="true">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+            @if (bell.unreadCount() > 0) {
+              <span class="notifications-badge" aria-hidden="true">{{ bell.unreadCount() > 9 ? '9+' : bell.unreadCount() }}</span>
             }
           </button>
           @if (notificationsOpen()) {
@@ -134,19 +134,23 @@
                 <span class="fw-600">Notificaciones</span>
               </div>
               <div class="notifications-panel-body">
-                @for (n of notifications(); track n.id) {
-                  <button
-                    type="button"
-                    class="notification-item"
-                    [class.notification-item--unread]="!n.read"
-                    (click)="markAsRead(n)"
-                  >
-                    <div class="notification-item-title">{{ n.title }}</div>
-                    <div class="notification-item-text">{{ n.message }}</div>
-                    <div class="notification-item-date">{{ n.date }}</div>
-                  </button>
-                } @empty {
-                  <div class="notifications-empty">No hay notificaciones</div>
+                @if (bell.loading() && bell.notifications().length === 0) {
+                  <div class="notifications-empty">Cargando notificaciones…</div>
+                } @else {
+                  @for (n of bell.notifications(); track n.id) {
+                    <button
+                      type="button"
+                      class="notification-item"
+                      [class.notification-item--unread]="!n.read"
+                      (click)="markAsRead(n)"
+                    >
+                      <div class="notification-item-title">{{ n.title }}</div>
+                      <div class="notification-item-text">{{ n.message }}</div>
+                      <div class="notification-item-date">{{ n.date }}</div>
+                    </button>
+                  } @empty {
+                    <div class="notifications-empty">No hay ejecuciones recientes en el reporte</div>
+                  }
                 }
               </div>
             </div>
