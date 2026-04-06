@@ -28,11 +28,8 @@
                 <th scope="col">Región (AWS S3)</th>
                 <th scope="col">Access Key ID (AWS S3)</th>
                 <th scope="col">Secret Access Key (AWS S3)</th>
-                <th scope="col">Cuenta servicio (Google)</th>
-                <th scope="col">Private key (Google)</th>
                 <th scope="col">Contenedor (Azure)</th>
                 <th scope="col">Conexión (Azure)</th>
-                <th scope="col">IDCarpeta</th>
                 <th scope="col" class="text-end">Acciones</th>
               </tr>
             </thead>
@@ -79,20 +76,6 @@
                     }
                   </td>
                   <td>
-                    @if (d.type === 'google_drive' && d.serviceAccountEmail) {
-                      <code class="small bg-light px-2 py-1 rounded">{{ d.serviceAccountEmail }}</code>
-                    } @else {
-                      <span class="text-muted">—</span>
-                    }
-                  </td>
-                  <td>
-                    @if (d.type === 'google_drive' && d.privateKeyConfigurada) {
-                      <span class="text-muted small">Almacenada (cifrada)</span>
-                    } @else {
-                      <span class="text-muted">—</span>
-                    }
-                  </td>
-                  <td>
                     @if (d.type === 'azure_blob' && d.azureBlobContainerName) {
                       <code class="small bg-light px-2 py-1 rounded">{{ d.azureBlobContainerName }}</code>
                     } @else {
@@ -106,14 +89,8 @@
                       <span class="text-muted">—</span>
                     }
                   </td>
-                  <td>
-                    @if (d.type === 'google_drive') {
-                      <code class="small bg-light px-2 py-1 rounded">{{ d.idCarpeta || '—' }}</code>
-                    } @else {
-                      <span class="text-muted">—</span>
-                    }
-                  </td>
                   <td class="text-end text-nowrap">
+                    @if (d.type !== 'google_drive') {
                     <button
                       type="button"
                       class="btn btn-sm btn-outline-primary btn-modern btn-icon btn-action btn-action-edit me-1"
@@ -122,6 +99,7 @@
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5v.5a.5.5 0 0 1 .5.5v.5h.5V10h.207l6.5-6.5zm-3.5 2.5L2 12.293V13h.707l6.5-6.5H9.5v-.5H9v-.5H8.5V5H8v-.5H7.5V4h-.293L2 9.293v.586l3-3z"/></svg>
                     </button>
+                    }
                     <button
                       type="button"
                       class="btn btn-sm btn-outline-danger btn-modern btn-icon btn-action btn-action-delete"
@@ -134,8 +112,8 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="13" class="text-center text-muted py-4">
-                    No hay destinos configurados. Añade uno (Amazon S3, Azure Blob Storage o Google Drive) con «Nuevo destino».
+                  <td colspan="10" class="text-center text-muted py-4">
+                    No hay destinos configurados. Añade uno (Amazon S3 o Azure Blob Storage) con «Nuevo destino».
                   </td>
                 </tr>
               }
@@ -182,7 +160,6 @@
             <select class="form-select" [(ngModel)]="formType" (ngModelChange)="onFormTypeChange()">
               <option value="s3">Amazon S3</option>
               <option value="azure_blob">Azure Blob Storage</option>
-              <option value="google_drive">Google Drive</option>
             </select>
           </div>
 
@@ -273,7 +250,7 @@
                 <div class="invalid-feedback d-block">{{ formSecretAccessKeyError() }}</div>
               }
             </div>
-          } @else if (formType === 'azure_blob') {
+          } @else {
             <p class="small text-muted mb-2">
               Usa la cadena de conexión del portal de Azure (Storage account → Access keys o una SAS con permisos al contenedor). El contenedor debe existir y permitir lectura al validar y escritura al ejecutar backups.
             </p>
@@ -331,69 +308,11 @@
               }
               <p class="small text-muted mb-0 mt-1">Al editar, déjala vacía para conservar la cadena guardada (cifrada).</p>
             </div>
-          } @else {
-            <p class="small text-muted mb-2">Usa una cuenta de servicio de Google Cloud con acceso a Google Drive. Obtén el JSON en la consola de Google Cloud y extrae <code>client_email</code> y <code>private_key</code>.</p>
-            <div class="mb-3">
-              <label class="form-label fw-500">
-                Correo de la Service Account
-                @if (!editingDest()) {
-                  <span class="text-danger" aria-hidden="true">*</span>
-                }
-              </label>
-              <input
-                type="text"
-                class="form-control"
-                [class.is-invalid]="formGoogleServiceAccountEmailError()"
-                [(ngModel)]="formGoogleServiceAccountEmail"
-                (ngModelChange)="onFormGoogleEmailInput()"
-                placeholder="nombre@proyecto.iam.gserviceaccount.com"
-                autocomplete="off"
-              />
-              @if (formGoogleServiceAccountEmailError()) {
-                <div class="invalid-feedback d-block">{{ formGoogleServiceAccountEmailError() }}</div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-500">
-                Clave privada (private_key)
-                @if (!editingDest()) {
-                  <span class="text-danger" aria-hidden="true">*</span>
-                }
-              </label>
-              <textarea
-                class="form-control font-monospace small"
-                [class.is-invalid]="formGooglePrivateKeyError()"
-                [(ngModel)]="formGooglePrivateKey"
-                (ngModelChange)="onFormGooglePrivateKeyInput()"
-                placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
-                rows="4"
-                autocomplete="off"
-              ></textarea>
-              @if (formGooglePrivateKeyError()) {
-                <div class="invalid-feedback d-block">{{ formGooglePrivateKeyError() }}</div>
-              }
-              <p class="small text-muted mb-0 mt-1">Pega el contenido completo del campo <code>private_key</code> del JSON de la cuenta de servicio.</p>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-500">IDCarpeta (ID de carpeta en Google Drive) <span class="text-danger" aria-hidden="true">*</span></label>
-              <input
-                type="text"
-                class="form-control"
-                [class.is-invalid]="formFolderIdError()"
-                [(ngModel)]="formFolderId"
-                (ngModelChange)="onFormFolderIdInput()"
-                placeholder="ID de la carpeta de destino"
-              />
-              @if (formFolderIdError()) {
-                <div class="invalid-feedback d-block">{{ formFolderIdError() }}</div>
-              }
-              <p class="small text-muted mb-0 mt-1">Carpeta donde se subirán los archivos. Comparte la carpeta en Drive con el correo de la Service Account (como editor).</p>
-            </div>
           }
 
-          @if (formType === 'google_drive') {
+          @if (formType === 's3') {
             <p class="small text-muted mb-0 mt-2">
-              «Probar conexión» llama a la API: se validan la cuenta de servicio y el acceso a la carpeta en Google Drive. Al <strong>crear</strong> el destino se ejecuta la misma comprobación en el servidor.
+              «Probar conexión» usa HeadBucket en AWS con las credenciales indicadas. Al <strong>crear</strong> o <strong>guardar</strong> se validan de nuevo los datos en el servidor.
             </p>
           }
           @if (formType === 'azure_blob') {

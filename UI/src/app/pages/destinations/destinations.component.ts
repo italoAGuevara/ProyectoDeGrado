@@ -11,6 +11,10 @@ import {
   UpdateDestinoPayload,
 } from '../../services/destinations.service';
 import { messageFromHttpError } from '../../utils/http-error.util';
+import { ToastService } from '../../services/toast.service';
+
+/** Tipos disponibles en el formulario (sin Google Drive). */
+type DestinoFormType = 's3' | 'azure_blob';
 
 @Component({
   selector: 'app-destinations',
@@ -20,6 +24,7 @@ import { messageFromHttpError } from '../../utils/http-error.util';
 })
 export class DestinationsComponent implements OnInit {
   readonly destSvc = inject(DestinationsService);
+  private readonly toast = inject(ToastService);
 
   /** Quita barras finales del prefijo guardado en API para mostrarlo en el formulario. */
   private static carpetaDestinoToForm(stored: string | undefined): string {
@@ -31,14 +36,11 @@ export class DestinationsComponent implements OnInit {
   saving = signal(false);
 
   formName = '';
-  formType: DestinationType = 's3';
+  formType: DestinoFormType = 's3';
   formBucket = '';
   formRegion = 'us-east-1';
   formAccessKeyId = '';
   formSecretAccessKey = '';
-  formFolderId = '';
-  formGoogleServiceAccountEmail = '';
-  formGooglePrivateKey = '';
   formAzureContainer = '';
   formAzureConnectionString = '';
   /** Prefijo dentro del bucket (S3) o del contenedor (Azure); sin barra final en el formulario. */
@@ -52,9 +54,6 @@ export class DestinationsComponent implements OnInit {
   formRegionError = signal<string | null>(null);
   formAccessKeyIdError = signal<string | null>(null);
   formSecretAccessKeyError = signal<string | null>(null);
-  formFolderIdError = signal<string | null>(null);
-  formGoogleServiceAccountEmailError = signal<string | null>(null);
-  formGooglePrivateKeyError = signal<string | null>(null);
   formAzureContainerError = signal<string | null>(null);
   formAzureConnectionStringError = signal<string | null>(null);
   formCarpetaDestinoError = signal<string | null>(null);
@@ -71,9 +70,6 @@ export class DestinationsComponent implements OnInit {
     this.formRegion = 'us-east-1';
     this.formAccessKeyId = '';
     this.formSecretAccessKey = '';
-    this.formFolderId = '';
-    this.formGoogleServiceAccountEmail = '';
-    this.formGooglePrivateKey = '';
     this.formAzureContainer = '';
     this.formAzureConnectionString = '';
     this.formCarpetaDestino = '';
@@ -83,9 +79,17 @@ export class DestinationsComponent implements OnInit {
   }
 
   openEdit(d: DestinoRow): void {
+    if (d.type === 'google_drive') {
+      this.toast.show(
+        'Los destinos Google Drive ya no se configuran en la aplicación. Puedes eliminar este destino si ya no lo usas.',
+        'error'
+      );
+      return;
+    }
+
     this.editingDest.set(d);
     this.formName = d.name;
-    this.formType = d.type;
+    this.formType = d.type === 'azure_blob' ? 'azure_blob' : 's3';
     if (d.type === 's3') {
       this.formAccessKeyId = (d.accessKeyId ?? '').trim();
       this.formBucket = d.bucketName ?? '';
@@ -93,26 +97,15 @@ export class DestinationsComponent implements OnInit {
       this.formAzureContainer = '';
       this.formAzureConnectionString = '';
       this.formCarpetaDestino = DestinationsComponent.carpetaDestinoToForm(d.carpetaDestino);
-    } else if (d.type === 'azure_blob') {
+    } else {
       this.formAccessKeyId = '';
       this.formBucket = '';
       this.formRegion = 'us-east-1';
       this.formAzureContainer = d.azureBlobContainerName ?? '';
       this.formAzureConnectionString = '';
       this.formCarpetaDestino = DestinationsComponent.carpetaDestinoToForm(d.carpetaDestino);
-    } else {
-      this.formAccessKeyId = '';
-      this.formBucket = '';
-      this.formRegion = 'us-east-1';
-      this.formAzureContainer = '';
-      this.formAzureConnectionString = '';
-      this.formCarpetaDestino = '';
     }
     this.formSecretAccessKey = '';
-    this.formFolderId = d.type === 'google_drive' ? d.idCarpeta : '';
-    this.formGoogleServiceAccountEmail =
-      d.type === 'google_drive' ? (d.serviceAccountEmail ?? '') : '';
-    this.formGooglePrivateKey = '';
     this.clearFormFieldErrors();
     this.showModal.set(true);
     this.testResult.set(null);
@@ -124,9 +117,6 @@ export class DestinationsComponent implements OnInit {
     this.formRegionError.set(null);
     this.formAccessKeyIdError.set(null);
     this.formSecretAccessKeyError.set(null);
-    this.formFolderIdError.set(null);
-    this.formGoogleServiceAccountEmailError.set(null);
-    this.formGooglePrivateKeyError.set(null);
     this.formAzureContainerError.set(null);
     this.formAzureConnectionStringError.set(null);
     this.formCarpetaDestinoError.set(null);
@@ -141,9 +131,6 @@ export class DestinationsComponent implements OnInit {
     this.formRegionError.set(null);
     this.formAccessKeyIdError.set(null);
     this.formSecretAccessKeyError.set(null);
-    this.formFolderIdError.set(null);
-    this.formGoogleServiceAccountEmailError.set(null);
-    this.formGooglePrivateKeyError.set(null);
     this.formAzureContainerError.set(null);
     this.formAzureConnectionStringError.set(null);
     this.formCarpetaDestinoError.set(null);
@@ -165,18 +152,6 @@ export class DestinationsComponent implements OnInit {
     if (this.formSecretAccessKeyError()) this.formSecretAccessKeyError.set(null);
   }
 
-  onFormFolderIdInput(): void {
-    if (this.formFolderIdError()) this.formFolderIdError.set(null);
-  }
-
-  onFormGoogleEmailInput(): void {
-    if (this.formGoogleServiceAccountEmailError()) this.formGoogleServiceAccountEmailError.set(null);
-  }
-
-  onFormGooglePrivateKeyInput(): void {
-    if (this.formGooglePrivateKeyError()) this.formGooglePrivateKeyError.set(null);
-  }
-
   onFormAzureContainerInput(): void {
     if (this.formAzureContainerError()) this.formAzureContainerError.set(null);
   }
@@ -195,22 +170,7 @@ export class DestinationsComponent implements OnInit {
       this.formNameError.set('El nombre es obligatorio.');
       ok = false;
     }
-    if (this.formType === 'google_drive') {
-      if (!this.formFolderId.trim()) {
-        this.formFolderIdError.set('El ID de carpeta es obligatorio.');
-        ok = false;
-      }
-      if (!edit) {
-        if (!this.formGoogleServiceAccountEmail.trim()) {
-          this.formGoogleServiceAccountEmailError.set('El correo de la cuenta de servicio es obligatorio.');
-          ok = false;
-        }
-        if (!this.formGooglePrivateKey.trim()) {
-          this.formGooglePrivateKeyError.set('La clave privada es obligatoria.');
-          ok = false;
-        }
-      }
-    } else if (this.formType === 'azure_blob') {
+    if (this.formType === 'azure_blob') {
       if (!this.formAzureContainer.trim()) {
         this.formAzureContainerError.set('El nombre del contenedor es obligatorio.');
         ok = false;
@@ -321,71 +281,36 @@ export class DestinationsComponent implements OnInit {
       return;
     }
 
-    if (this.formType === 'azure_blob') {
-      const container = this.formAzureContainer?.trim();
-      const conn = this.formAzureConnectionString?.trim();
-      if (!container) {
-        this.testResult.set({ success: false, message: 'Completa el nombre del contenedor.' });
-        return;
-      }
-      if (!this.formCarpetaDestino?.trim()) {
-        this.testResult.set({
-          success: false,
-          message: 'Indica la carpeta destino (prefijo dentro del contenedor).',
-        });
-        return;
-      }
-      if (!conn) {
-        this.testResult.set({
-          success: false,
-          message:
-            this.editingDest() && !conn
-              ? 'Para probar la conexión, pega de nuevo la cadena de conexión (no se muestra al editar por seguridad).'
-              : 'Completa la cadena de conexión de Azure Storage.',
-        });
-        return;
-      }
-      this.testingConnection.set(true);
-      this.destSvc
-        .validarAzureBlob({ azureBlobContainerName: container, azureBlobConnectionString: this.formAzureConnectionString })
-        .pipe(finalize(() => this.testingConnection.set(false)))
-        .subscribe({
-          next: (r) => this.testResult.set({ success: true, message: r.mensaje }),
-          error: (err: unknown) => this.testResult.set({ success: false, message: messageFromHttpError(err) }),
-        });
+    const container = this.formAzureContainer?.trim();
+    const conn = this.formAzureConnectionString?.trim();
+    if (!container) {
+      this.testResult.set({ success: false, message: 'Completa el nombre del contenedor.' });
       return;
     }
-
-    const folderId = this.formFolderId?.trim();
-    const email = this.formGoogleServiceAccountEmail?.trim();
-    const key = this.formGooglePrivateKey?.trim();
-    if (!folderId) {
-      this.testResult.set({ success: false, message: 'Completa el ID de carpeta.' });
-      return;
-    }
-    if (!email || !key) {
-      const editing = !!this.editingDest();
+    if (!this.formCarpetaDestino?.trim()) {
       this.testResult.set({
         success: false,
-        message:
-          editing && email && !key
-            ? 'Para probar la conexión, pega de nuevo la clave privada (no se muestra al editar por seguridad).'
-            : 'Completa el correo de la Service Account y la clave privada.',
+        message: 'Indica la carpeta destino (prefijo dentro del contenedor).',
       });
       return;
     }
-
+    if (!conn) {
+      this.testResult.set({
+        success: false,
+        message:
+          this.editingDest() && !conn
+            ? 'Para probar la conexión, pega de nuevo la cadena de conexión (no se muestra al editar por seguridad).'
+            : 'Completa la cadena de conexión de Azure Storage.',
+      });
+      return;
+    }
     this.testingConnection.set(true);
     this.destSvc
-      .validarGoogleDrive({ idCarpeta: folderId, serviceAccountEmail: email, privateKey: key })
+      .validarAzureBlob({ azureBlobContainerName: container, azureBlobConnectionString: this.formAzureConnectionString })
       .pipe(finalize(() => this.testingConnection.set(false)))
       .subscribe({
-        next: (r) => {
-          this.testResult.set({ success: true, message: r.mensaje });
-        },
-        error: (err: unknown) => {
-          this.testResult.set({ success: false, message: messageFromHttpError(err) });
-        },
+        next: (r) => this.testResult.set({ success: true, message: r.mensaje }),
+        error: (err: unknown) => this.testResult.set({ success: false, message: messageFromHttpError(err) }),
       });
   }
 
@@ -446,16 +371,7 @@ export class DestinationsComponent implements OnInit {
   }
 
   private tryBuildCreatePayload(nombre: string): CreateDestinoPayload {
-    const tipoApi = tipoDestinoUiToApi(this.formType);
-    if (this.formType === 'google_drive') {
-      return {
-        nombre,
-        tipoApi,
-        idCarpeta: this.formFolderId.trim(),
-        serviceAccountEmail: this.formGoogleServiceAccountEmail.trim(),
-        privateKey: this.formGooglePrivateKey.trim(),
-      };
-    }
+    const tipoApi = tipoDestinoUiToApi(this.formType as DestinationType);
     if (this.formType === 'azure_blob') {
       return {
         nombre,
@@ -479,17 +395,8 @@ export class DestinationsComponent implements OnInit {
   private tryBuildUpdatePayload(nombre: string, edit: DestinoRow): UpdateDestinoPayload {
     const payload: UpdateDestinoPayload = {
       nombre,
-      tipoApi: tipoDestinoUiToApi(this.formType),
+      tipoApi: tipoDestinoUiToApi(this.formType as DestinationType),
     };
-
-    if (this.formType === 'google_drive') {
-      payload.idCarpeta = this.formFolderId.trim();
-      const email = this.formGoogleServiceAccountEmail.trim();
-      const pk = this.formGooglePrivateKey.trim();
-      if (email !== (edit.serviceAccountEmail ?? '')) payload.serviceAccountEmail = email;
-      if (pk) payload.privateKey = pk;
-      return payload;
-    }
 
     if (this.formType === 'azure_blob') {
       const c = this.formAzureContainer.trim();

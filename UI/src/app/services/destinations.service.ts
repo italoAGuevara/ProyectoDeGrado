@@ -83,11 +83,6 @@ export interface UpdateDestinoPayload {
   carpetaDestino?: string;
 }
 
-export interface GoogleDriveValidacionDto {
-  mensaje: string;
-  nombreCarpeta?: string | null;
-}
-
 export interface S3ValidacionDto {
   mensaje: string;
   bucket?: string | null;
@@ -155,24 +150,6 @@ export class DestinationsService {
         return throwError(() => err);
       })
     );
-  }
-
-  /** Valida en la API credenciales y acceso a la carpeta (Google Drive API). */
-  validarGoogleDrive(body: {
-    idCarpeta: string;
-    serviceAccountEmail: string;
-    privateKey: string;
-  }): Observable<GoogleDriveValidacionDto> {
-    return this.http
-      .post<unknown>(`${API_DESTINOS}/validar-google-drive`, {
-        idCarpeta: body.idCarpeta.trim(),
-        serviceAccountEmail: body.serviceAccountEmail.trim(),
-        privateKey: body.privateKey,
-      })
-      .pipe(
-        map((res) => unwrapApiDetails<GoogleDriveValidacionDto>(res)),
-        catchError((err) => throwError(() => err))
-      );
   }
 
   /**

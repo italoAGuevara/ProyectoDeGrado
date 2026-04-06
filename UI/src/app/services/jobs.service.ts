@@ -178,7 +178,7 @@ export class JobsService {
     );
   }
 
-  /** Ejecuta la copia manual (origen → S3 o Google Drive según el destino del trabajo). */
+  /** Ejecuta la copia manual (origen → S3, Azure Blob u otro destino configurado del trabajo). */
   runManual(id: number): Observable<EjecutarTrabajoResult> {
     return this.http.post<unknown>(`${API_TRABAJOS}/${id}/ejecutar`, {}).pipe(
       map((res) => unwrapApiDetails<EjecutarTrabajoApiDto>(res)),
