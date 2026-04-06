@@ -32,7 +32,10 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
         _logger = logger;
     }
 
-    public async Task<EjecutarTrabajoResponse> EjecutarManualAsync(int trabajoId, CancellationToken cancellationToken = default)
+    public async Task<EjecutarTrabajoResponse> EjecutarManualAsync(
+        int trabajoId,
+        CancellationToken cancellationToken = default,
+        JobExecutionTrigger trigger = JobExecutionTrigger.Manual)
     {
         var claimed = await _context.Trabajos
             .Where(t => t.Id == trabajoId && !t.Procesando)
@@ -72,7 +75,9 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
             StartTime = DateTime.UtcNow,
             EndTime = DateTime.UtcNow,
             Status = BackupStatus.InProgress,
-            ErrorMessage = null
+            ErrorMessage = null,
+            Trigger = trigger,
+            ArchivosCopiados = null
         };
         _context.HistoryBackupExecutions.Add(history);
         await _context.SaveChangesAsync(cancellationToken);
@@ -106,7 +111,8 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
                     s => s
                         .SetProperty(h => h.Status, BackupStatus.Completed)
                         .SetProperty(h => h.EndTime, DateTime.UtcNow)
-                        .SetProperty(h => h.ErrorMessage, (string?)null),
+                        .SetProperty(h => h.ErrorMessage, (string?)null)
+                        .SetProperty(h => h.ArchivosCopiados, copied),
                     cancellationToken);
 
             await EjecutarScriptPostSiAplicaAsync(trabajo, cancellationToken);
@@ -115,11 +121,21 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
                 ? "Ejecución finalizada; no había archivos para copiar (o todos fueron excluidos por filtros)."
                 : $"Ejecución correcta. Archivos copiados: {copied}.";
 
+            var duracion = DateTime.UtcNow - history.StartTime;
+            _logger.LogInformation(
+                "Ejecución de trabajo {TrabajoId} «{NombreTrabajo}» OK. Historial {HistorialId}, disparo {Disparo}, archivos {Archivos}, duración {Duracion}s",
+                trabajoId,
+                trabajo.Nombre,
+                history.Id,
+                trigger,
+                copied,
+                Math.Round(duracion.TotalSeconds, 2));
+
             return new EjecutarTrabajoResponse(history.Id, copied, mensaje);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Fallo al ejecutar trabajo {TrabajoId}", trabajoId);
+            _logger.LogError(ex, "Fallo al ejecutar trabajo {TrabajoId} (disparo {Disparo}, historial {HistorialId})", trabajoId, trigger, history.Id);
             var msg = ex is BadRequestException or NotFoundException or ConflictException
                 ? ex.Message
                 : $"Error inesperado: {ex.Message}";

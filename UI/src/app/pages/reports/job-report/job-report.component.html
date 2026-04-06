@@ -38,9 +38,100 @@
     </div>
   </div>
 
+  <div class="app-card card border-0 overflow-hidden mb-4">
+    <div class="card-header bg-transparent border-0 border-bottom py-3 px-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <h5 class="mb-0 fw-600">Historial de ejecuciones</h5>
+        <p class="small text-muted mb-0 mt-1">Registro de cada copia a la nube (manual o por cron), con duración y resultado.</p>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <select
+          class="form-select form-select-sm"
+          style="min-width: 11rem"
+          [(ngModel)]="filtroTrabajoId"
+          name="filtroTrabajoHistorial">
+          <option [ngValue]="''">Todos los trabajos</option>
+          @for (job of jobs(); track job.id) {
+            <option [ngValue]="job.id">{{ job.name }}</option>
+          }
+        </select>
+        <button type="button" class="btn btn-sm btn-outline-primary" (click)="aplicarFiltroHistorial()">Aplicar filtro</button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      @if (historialLoading()) {
+        <p class="text-muted small py-4 px-4 mb-0">Cargando historial…</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-modern table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Inicio (local)</th>
+                <th>Fin</th>
+                <th>Duración</th>
+                <th>Trabajo</th>
+                <th>Estado</th>
+                <th>Archivos</th>
+                <th>Disparo</th>
+                <th>Error / detalle</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of historial(); track row.id) {
+                <tr>
+                  <td class="small">{{ row.startTime | date: 'short' }}</td>
+                  <td class="small">{{ row.endTime | date: 'short' }}</td>
+                  <td class="small text-muted">{{ formatoDuracion(row.duracionSegundos) }}</td>
+                  <td class="fw-500">{{ row.trabajoNombre }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="estadoHistorialClass(row.estado)">{{ estadoHistorialLabel(row.estado) }}</span>
+                  </td>
+                  <td class="small">{{ row.archivosCopiados ?? '—' }}</td>
+                  <td>
+                    <span class="badge" [class.bg-primary]="row.disparo === 'manual'" [class.bg-secondary]="row.disparo === 'programada'">
+                      {{ disparoLabel(row.disparo) }}
+                    </span>
+                  </td>
+                  <td class="small text-muted" [title]="row.errorMessage ?? ''">{{ truncarTexto(row.errorMessage, 72) }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">No hay ejecuciones registradas todavía.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (historialTotal() > 0) {
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-4 py-3 border-top">
+            <span class="small text-muted">
+              {{ historialTotal() }} registro(s) · página {{ historialPage() }} de {{ historialTotalPaginas() }}
+            </span>
+            <div class="btn-group btn-group-sm">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                [disabled]="historialPage() <= 1"
+                (click)="historialPaginaAnterior()">
+                Anterior
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                [disabled]="historialPage() >= historialTotalPaginas()"
+                (click)="historialPaginaSiguiente()">
+                Siguiente
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
   <div class="app-card card border-0 overflow-hidden">
     <div class="card-header bg-transparent border-0 border-bottom py-3 px-4">
-      <h5 class="mb-0 fw-600">Historial y estado</h5>
+      <h5 class="mb-0 fw-600">Catálogo de trabajos</h5>
       <p class="small text-muted mb-0 mt-1">Resumen de todos los trabajos de copiado configurados.</p>
     </div>
     <div class="card-body p-0">

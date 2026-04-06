@@ -1,6 +1,12 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { JobsService, Job } from '../../../services/jobs.service';
+import {
+  EjecucionHistorialItem,
+  JobExecutionsReportService,
+} from '../../../services/job-executions-report.service';
 import { ScriptsService } from '../../../services/scripts.service';
 import { DestinationsService } from '../../../services/destinations.service';
 import { ReportBreadcrumbComponent, BreadcrumbItem } from '../../../layout/report-breadcrumb/report-breadcrumb.component';
@@ -8,12 +14,13 @@ import { ReportBreadcrumbComponent, BreadcrumbItem } from '../../../layout/repor
 @Component({
   selector: 'app-job-report',
   standalone: true,
-  imports: [RouterLink, ReportBreadcrumbComponent],
+  imports: [CommonModule, RouterLink, ReportBreadcrumbComponent, DatePipe, FormsModule],
   templateUrl: './job-report.component.html',
   styleUrl: './job-report.component.css',
 })
 export class JobReportComponent implements OnInit {
   private jobsService = inject(JobsService);
+  private executionsReport = inject(JobExecutionsReportService);
   private scriptsService = inject(ScriptsService);
   private destinationsService = inject(DestinationsService);
 
@@ -23,10 +30,108 @@ export class JobReportComponent implements OnInit {
   ];
   jobs = this.jobsService.jobs;
 
+  historial = signal<EjecucionHistorialItem[]>([]);
+  historialTotal = signal(0);
+  historialPage = signal(1);
+  readonly historialPageSize = 25;
+  historialLoading = signal(false);
+  /** Filtro por trabajo: '' = todos */
+  filtroTrabajoId: number | '' = '';
+
   ngOnInit(): void {
     this.jobsService.loadAll();
     this.scriptsService.loadAll();
     this.destinationsService.loadAll();
+    this.cargarHistorialEjecuciones();
+  }
+
+  cargarHistorialEjecuciones(): void {
+    this.historialLoading.set(true);
+    const tid = this.filtroTrabajoId;
+    this.executionsReport
+      .getHistorial({
+        trabajoId: tid === '' ? null : tid,
+        page: this.historialPage(),
+        pageSize: this.historialPageSize,
+      })
+      .subscribe({
+        next: (list) => {
+          this.historial.set(list.items);
+          this.historialTotal.set(list.total);
+          this.historialLoading.set(false);
+        },
+        error: () => {
+          this.historial.set([]);
+          this.historialTotal.set(0);
+          this.historialLoading.set(false);
+        },
+      });
+  }
+
+  aplicarFiltroHistorial(): void {
+    this.historialPage.set(1);
+    this.cargarHistorialEjecuciones();
+  }
+
+  historialTotalPaginas(): number {
+    return Math.max(1, Math.ceil(this.historialTotal() / this.historialPageSize));
+  }
+
+  historialPaginaAnterior(): void {
+    if (this.historialPage() <= 1) return;
+    this.historialPage.update((p) => p - 1);
+    this.cargarHistorialEjecuciones();
+  }
+
+  historialPaginaSiguiente(): void {
+    if (this.historialPage() >= this.historialTotalPaginas()) return;
+    this.historialPage.update((p) => p + 1);
+    this.cargarHistorialEjecuciones();
+  }
+
+  formatoDuracion(seg: number | null): string {
+    if (seg === null || seg === undefined || Number.isNaN(seg)) return '—';
+    if (seg < 60) return `${Math.round(seg)} s`;
+    const m = Math.floor(seg / 60);
+    const s = Math.round(seg % 60);
+    return `${m} min ${s} s`;
+  }
+
+  estadoHistorialClass(estado: string): string {
+    switch (estado) {
+      case 'completado':
+        return 'bg-success';
+      case 'fallido':
+        return 'bg-danger';
+      case 'en_progreso':
+        return 'bg-warning text-dark';
+      default:
+        return 'bg-secondary';
+    }
+  }
+
+  estadoHistorialLabel(estado: string): string {
+    switch (estado) {
+      case 'completado':
+        return 'Completado';
+      case 'fallido':
+        return 'Fallido';
+      case 'en_progreso':
+        return 'En progreso';
+      case 'pendiente':
+        return 'Pendiente';
+      default:
+        return estado;
+    }
+  }
+
+  disparoLabel(disparo: string): string {
+    return disparo === 'programada' ? 'Programada (cron)' : 'Manual';
+  }
+
+  truncarTexto(s: string | null, max: number): string {
+    if (!s) return '—';
+    return s.length <= max ? s : s.slice(0, max) + '…';
   }
 
   destinationLabel(job: Job): string {

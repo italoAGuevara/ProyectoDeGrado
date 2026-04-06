@@ -100,6 +100,7 @@ builder.Services.AddScoped<IOrigenService, OrigenService>();
 builder.Services.AddScoped<IDestinoService, DestinoService>();
 builder.Services.AddScoped<ITrabajoService, TrabajoService>();
 builder.Services.AddScoped<ITrabajoEjecucionService, TrabajoEjecucionService>();
+builder.Services.AddScoped<IJobExecutionReportService, JobExecutionReportService>();
 builder.Services.AddScoped<IDestinoToCloudCopier, DestinoToCloudCopier>();
 builder.Services.Configure<ScriptRunnerOptions>(builder.Configuration.GetSection(ScriptRunnerOptions.SectionName));
 builder.Services.AddScoped<ApplicationSettingsService>();
@@ -150,6 +151,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapAuthEndpoint();
 app.MapSettingsEndpoint();
+app.MapReportesEndpoint();
 app.MapScripts();
 app.MapOrigenes();
 app.MapDestinos();

@@ -1,5 +1,6 @@
 using API.Exceptions;
 using API.Services.Interfaces;
+using HostedService.Enums;
 using HostedService.Scheduling;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +50,7 @@ public sealed class TrabajoCronTickHandler : ITrabajoCronTickHandler
                     "Ejecución programada (cron): trabajo {TrabajoId} «{Nombre}»",
                     t.Id, t.Nombre);
 
-                await _ejecucion.EjecutarManualAsync(t.Id, cancellationToken);
+                await _ejecucion.EjecutarManualAsync(t.Id, cancellationToken, JobExecutionTrigger.Programada);
             }
             catch (ConflictException)
             {

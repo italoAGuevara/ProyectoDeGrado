@@ -10,5 +10,11 @@ namespace HostedService.Entities
         public DateTime EndTime { get; set; }
         public BackupStatus Status { get; set; }
         public string? ErrorMessage { get; set; }
-    } 
+
+        /// <summary>Manual (UI/API) o programada (cron).</summary>
+        public JobExecutionTrigger Trigger { get; set; } = JobExecutionTrigger.Manual;
+
+        /// <summary>Archivos copiados en destino; null si falló antes de completar la copia.</summary>
+        public int? ArchivosCopiados { get; set; }
+    }
 }
