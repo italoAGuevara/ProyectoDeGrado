@@ -9,4 +9,9 @@ public sealed class ScriptRunnerOptions
     /// Vacío: se usa <c>runtime/node/node.exe</c> (Windows) o <c>runtime/node/node</c> si existe; si no, <c>node</c> del PATH.
     /// </summary>
     public string? NodeExecutablePath { get; set; }
+
+    /// <summary>
+    /// Tiempo máximo de espera a que el proceso del script termine. Si es &lt;= 0, se usan 2 minutos.
+    /// </summary>
+    public int ScriptExecutionTimeoutMinutes { get; set; }
 }

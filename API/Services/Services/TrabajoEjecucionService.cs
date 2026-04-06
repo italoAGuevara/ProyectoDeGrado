@@ -210,6 +210,10 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
         {
             throw new BadRequestException(ex.Message);
         }
+        catch (TimeoutException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
     }
 
     private static string FormatearSalidaScript(ScriptExecutionResult result)

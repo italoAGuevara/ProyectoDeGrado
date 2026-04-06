@@ -60,12 +60,50 @@ public sealed class ScriptRunner : IScriptRunner
 
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
-        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+        var timeoutMinutes = _options.ScriptExecutionTimeoutMinutes > 0
+            ? _options.ScriptExecutionTimeoutMinutes
+            : 2;
+
+        using var timeoutCts = new CancellationTokenSource();
+        timeoutCts.CancelAfter(TimeSpan.FromMinutes(timeoutMinutes));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+        try
+        {
+            await process.WaitForExitAsync(linkedCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                throw;
+
+            TryKillProcessTree(process);
+            throw new TimeoutException(
+                $"El script superó el tiempo máximo de ejecución ({timeoutMinutes} minutos).");
+        }
 
         return new ScriptExecutionResult(
             process.ExitCode,
             stdout.ToString().TrimEnd(),
             stderr.ToString().TrimEnd());
+    }
+
+    private static void TryKillProcessTree(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+                process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException)
+        {
+            // El proceso ya terminó entre medias.
+        }
+        catch (Win32Exception)
+        {
+            // Sin permisos o proceso ya no existe.
+        }
     }
 
     private static string NormalizeTipo(string tipo, string fullPath)
