@@ -1,5 +1,6 @@
 using API.Endpoints;
 using API.Middleware;
+using API.Platform;
 using API.Services.Interfaces;
 using HostedService;
 using HostedService.Backup;
@@ -160,6 +161,10 @@ app.MapLogAccionesUsuario();
 
 try
 {
+    var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+    var trayLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("WindowsTray");
+    WindowsTrayHost.Start(lifetime, app.Configuration, trayLogger);
+
     Log.Information("Starting web host");
     app.Run();
 }
