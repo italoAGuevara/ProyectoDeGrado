@@ -58,6 +58,8 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
             .ThenInclude(l => l.Destino)
             .Include(t => t.TrabajosScripts)
             .ThenInclude(ts => ts.ScriptPre)
+            .Include(t => t.TrabajosScripts)
+            .ThenInclude(ts => ts.ScriptPost)
             .FirstAsync(t => t.Id == trabajoId, cancellationToken);
 
         var origen = trabajo.TrabajosOrigenDestino.Origen;
@@ -107,6 +109,8 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
                         .SetProperty(h => h.ErrorMessage, (string?)null),
                     cancellationToken);
 
+            await EjecutarScriptPostSiAplicaAsync(trabajo, cancellationToken);
+
             var mensaje = copied == 0
                 ? "Ejecución finalizada; no había archivos para copiar (o todos fueron excluidos por filtros)."
                 : $"Ejecución correcta. Archivos copiados: {copied}.";
@@ -147,23 +151,7 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
         if (pre is null)
             return;
 
-        ScriptExecutionResult result;
-        try
-        {
-            result = await _scriptRunner.RunAsync(pre, cancellationToken).ConfigureAwait(false);
-        }
-        catch (FileNotFoundException ex)
-        {
-            throw new BadRequestException(ex.Message);
-        }
-        catch (NotSupportedException ex)
-        {
-            throw new BadRequestException(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            throw new BadRequestException(ex.Message);
-        }
+        var result = await EjecutarScriptInternoAsync(pre, cancellationToken).ConfigureAwait(false);
 
         if (result.ExitCode == 0)
             return;
@@ -177,6 +165,51 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
             pre.Nombre,
             result.ExitCode,
             detalle);
+    }
+
+    private async Task EjecutarScriptPostSiAplicaAsync(Trabajo trabajo, CancellationToken cancellationToken)
+    {
+        var post = trabajo.TrabajosScripts.ScriptPost;
+        if (post is null)
+            return;
+
+        var result = await EjecutarScriptInternoAsync(post, cancellationToken).ConfigureAwait(false);
+
+        if (result.ExitCode == 0)
+            return;
+
+        var detalle = FormatearSalidaScript(result);
+        if (trabajo.TrabajosScripts.PostDetenerEnFallo)
+            throw new BadRequestException(
+                $"El script POST «{post.Nombre}» falló tras completar la copia ({detalle}).");
+
+        _logger.LogWarning(
+            "Script POST «{Nombre}» terminó con código {ExitCode}. La copia ya finalizó correctamente. {Detalle}",
+            post.Nombre,
+            result.ExitCode,
+            detalle);
+    }
+
+    private async Task<ScriptExecutionResult> EjecutarScriptInternoAsync(
+        ScriptConfiguration script,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _scriptRunner.RunAsync(script, cancellationToken).ConfigureAwait(false);
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+        catch (NotSupportedException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
     }
 
     private static string FormatearSalidaScript(ScriptExecutionResult result)
