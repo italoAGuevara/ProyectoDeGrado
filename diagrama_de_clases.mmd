@@ -1,0 +1,233 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'background': 'transparent',
+    'mainBkg': 'transparent',
+    'nodeBkg': 'transparent',
+    'classText': '#000000',
+    'nodeBorder': '#000000',
+    'lineColor': '#000000',
+    'tertiaryColor': 'transparent',
+    'labelBackground': 'transparent',
+    'labelBoxBkgColor': 'transparent',
+    'labelBoxBorderColor': 'transparent',
+    'fontFamily': 'Helvetica, Arial, sans-serif',
+    'fontSize': '11px'
+  }
+}}%%
+classDiagram
+  direction TB
+
+
+
+  class DbContext {
+    +SaveChanges() int
+    +SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken) Task~int~
+    +Database DatabaseFacade
+  }
+
+  class AppDbContext {
+    +AppDbContext(DbContextOptions~AppDbContext~ options)
+    #OnModelCreating(ModelBuilder modelBuilder) void
+    +EnsureSeedData() void
+    +Trabajos DbSet~Trabajo~
+    +TrabajosOrigenDestinos DbSet~TrabajosOrigenDestino~
+    +TrabajosScripts DbSet~TrabajoScripts~
+    +Users DbSet~User~
+    +HistoryBackupExecutions DbSet~HistoryBackupExecutions~
+    +Origenes DbSet~Origen~
+    +Destinos DbSet~Destino~
+    +ScriptConfigurations DbSet~ScriptConfiguration~
+    +LogAccionesUsuario DbSet~LogAccionesUsuario~
+    +ApplicationSettings DbSet~ApplicationSettings~
+  }
+
+  class ApplicationSettings {
+    <<sealed>>
+    +int SingletonId$
+    +int Id
+    +int ScriptExecutionTimeoutMinutes
+    
+    
+    
+  }
+
+  class User {
+    +int Id
+    +string PasswordHash
+    +bool RequirePassword
+    
+    
+    
+  }
+
+  class Origen {
+    +int Id
+    +string Nombre
+    +string Ruta
+    +string Descripcion
+    +string TamanoMaximo
+    +string FiltrosExclusiones
+    +DateTime FechaCreacion
+    +DateTime FechaModificacion
+    
+    
+    
+  }
+
+  class Destino {
+    +int Id
+    +string Nombre
+    +string TipoDeDestino
+    +string Credenciales
+    +string IdCarpeta
+    +string AccessKeyId
+    +string SecretAccessKey
+    +string BucketName
+    +string S3Region
+    +string GoogleServiceAccountEmail
+    +string GooglePrivateKey
+    +string AzureBlobContainerName
+    +string AzureBlobConnectionString
+    +string CarpetaDestino
+    +DateTime FechaCreacion
+    +DateTime FechaModificacion
+    
+    
+    
+  }
+
+  class TrabajosOrigenDestino {
+    +int Id
+    +int OrigenId
+    +int DestinoId
+    +DateTime FechaCreacion
+    +DateTime FechaModificacion
+    +Origen Origen
+    +Destino Destino
+    +ICollection~Trabajo~ Trabajos
+    
+    
+    
+  }
+
+  class ScriptConfiguration {
+    +int Id
+    +string Nombre
+    +string ScriptPath
+    +string Arguments
+    +DateTime CreatedOn
+    +DateTime? UpdatedOn
+    +string Tipo
+    +ICollection~TrabajoScripts~ TrabajoScriptsComoPre
+    +ICollection~TrabajoScripts~ TrabajoScriptsComoPost
+    
+    
+    
+  }
+
+  class TrabajoScripts {
+    +int Id
+    +int? ScriptPreId
+    +bool PreDetenerEnFallo
+    +int? ScriptPostId
+    +bool PostDetenerEnFallo
+    +DateTime FechaCreacion
+    +DateTime FechaModificacion
+    +ScriptConfiguration? ScriptPre
+    +ScriptConfiguration? ScriptPost
+    +ICollection~Trabajo~ Trabajos
+    
+    
+    
+  }
+
+  class Trabajo {
+    +int Id
+    +string Nombre
+    +string Descripcion
+    +int TrabajosOrigenDestinoId
+    +int TrabajosScriptsId
+    +string CronExpression
+    +bool Activo
+    +bool Procesando
+    +string EstatusPrevio
+    +DateTime FechaCreacion
+    +DateTime FechaModificacion
+    +TrabajosOrigenDestino TrabajosOrigenDestino
+    +TrabajoScripts TrabajosScripts
+    
+    
+    
+  }
+
+  class HistoryBackupExecutions {
+    +int Id
+    +int TrabajoId
+    +DateTime StartTime
+    +DateTime EndTime
+    +BackupStatus Status
+    +JobExecutionTrigger Trigger
+    +string? ErrorMessage
+    +int? ArchivosCopiados
+    
+    
+    
+  }
+
+  class LogAccionesUsuario {
+    +Guid Id
+    +DateTime FechaAccion
+    +string ValorAnterior
+    +string ValorNuevo
+    +string Accion
+    +string TablaAfectada
+    
+    
+    
+  }
+
+  class BackupStatus {
+    <<enumeration>>
+    Pending
+    InProgress
+    Completed
+    Failed
+    
+    
+    
+  }
+
+  class JobExecutionTrigger {
+    <<enumeration>>
+    Manual
+    Programada
+    
+    
+    
+  }
+
+  DbContext <|-- AppDbContext
+
+  TrabajosOrigenDestino "1" --> "1" Origen
+  TrabajosOrigenDestino "1" --> "1" Destino
+  Trabajo "*" --> "1" TrabajosOrigenDestino
+  Trabajo "*" --> "1" TrabajoScripts
+  TrabajoScripts "0..1" --> "0..1" ScriptConfiguration : ScriptPre
+  TrabajoScripts "0..1" --> "0..1" ScriptConfiguration : ScriptPost
+  TrabajoScripts "1" o-- "*" Trabajo
+
+  HistoryBackupExecutions ..> Trabajo : TrabajoId
+  HistoryBackupExecutions --> BackupStatus
+  HistoryBackupExecutions --> JobExecutionTrigger
+
+  AppDbContext o-- "*" Trabajo
+  AppDbContext o-- "*" TrabajosOrigenDestino
+  AppDbContext o-- "*" TrabajoScripts
+  AppDbContext o-- "*" User
+  AppDbContext o-- "*" HistoryBackupExecutions
+  AppDbContext o-- "*" Origen
+  AppDbContext o-- "*" Destino
+  AppDbContext o-- "*" ScriptConfiguration
+  AppDbContext o-- "*" LogAccionesUsuario
+  AppDbContext o-- "*" ApplicationSettings
