@@ -11,14 +11,28 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260405235127_FirstMigration")]
-    partial class FirstMigration
+    [Migration("20260407234235_SecondMigration")]
+    partial class SecondMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
+
+            modelBuilder.Entity("HostedService.Entities.ApplicationSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ScriptExecutionTimeoutMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ApplicationSettings");
+                });
 
             modelBuilder.Entity("HostedService.Entities.Destino", b =>
                 {
@@ -92,45 +106,13 @@ namespace Infrastructure.Migrations
                     b.ToTable("Destinos");
                 });
 
-            modelBuilder.Entity("HostedService.Entities.FileMetadata", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<Guid>("BackupJobsId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CloudFileId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("HashCode")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("LastModified")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("LastTimeSync")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RelativePath")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("FileMetadatas");
-                });
-
             modelBuilder.Entity("HostedService.Entities.HistoryBackupExecutions", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ArchivosCopiados")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("EndTime")
@@ -146,6 +128,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("TrabajoId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Trigger")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -254,24 +239,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ScriptConfigurations");
-                });
-
-            modelBuilder.Entity("HostedService.Entities.StorageProvider", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ConfigJsonSchema")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StorageProviders");
                 });
 
             modelBuilder.Entity("HostedService.Entities.Trabajo", b =>
@@ -400,26 +367,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("HostedService.Entities.UserStorages", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CloudDestination")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CredentialJson")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("IdUser")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserStorages");
                 });
 
             modelBuilder.Entity("HostedService.Entities.Trabajo", b =>

@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="0QxZaz-93o9h7hWywdgL" name="Page-1">
-        <mxGraphModel dx="1363" dy="953" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1948" dy="1150" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -16,7 +16,7 @@
                 <mxCell id="192" value="FIN" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#ff0000;fontColor=#FFFFFF;" parent="8" vertex="1">
                     <mxGeometry x="65" y="580" width="30" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="87" value="Diagrama de actividad Crear Trabajo" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1" parent="1" vertex="1">
+                <mxCell id="87" value="Diagrama de actividad Modificar Trabajo" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1" parent="1" vertex="1">
                     <mxGeometry x="60" y="110" width="1320" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="150" value="Usuario" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
@@ -166,13 +166,16 @@
                 <mxCell id="187" value="Agregar Scripts de tipos PRE o POST&lt;div&gt;(Opcional)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="150" vertex="1">
                     <mxGeometry x="675" y="470" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="194" value="Listar trabajos" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="150">
+                <mxCell id="196" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="150" source="194" target="152">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="194" value="Listar trabajos" style="rounded=1;whiteSpace=wrap;html=1;" parent="150" vertex="1">
                     <mxGeometry x="110" y="100" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="191" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="187" target="190" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="195" value="" style="html=1;verticalAlign=bottom;startArrow=circle;startFill=1;endArrow=open;startSize=6;endSize=8;curved=0;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="194">
+                <mxCell id="195" value="" style="html=1;verticalAlign=bottom;startArrow=circle;startFill=1;endArrow=open;startSize=6;endSize=8;curved=0;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="194" edge="1">
                     <mxGeometry width="80" relative="1" as="geometry">
                         <mxPoint x="80" y="290" as="sourcePoint"/>
                         <mxPoint x="750" y="400" as="targetPoint"/>

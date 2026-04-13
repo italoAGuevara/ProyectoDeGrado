@@ -6,11 +6,24 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstMigration : Migration
+    public partial class SecondMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "ApplicationSettings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ScriptExecutionTimeoutMinutes = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApplicationSettings", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Destinos",
                 columns: table => new
@@ -39,25 +52,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "FileMetadatas",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    BackupJobsId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    RelativePath = table.Column<string>(type: "TEXT", nullable: false),
-                    FileSize = table.Column<long>(type: "INTEGER", nullable: false),
-                    HashCode = table.Column<string>(type: "TEXT", nullable: false),
-                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CloudFileId = table.Column<string>(type: "TEXT", nullable: false),
-                    LastTimeSync = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FileMetadatas", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "HistoryBackupExecutions",
                 columns: table => new
                 {
@@ -67,7 +61,9 @@ namespace Infrastructure.Migrations
                     StartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
                     EndTime = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    ErrorMessage = table.Column<string>(type: "TEXT", nullable: true)
+                    ErrorMessage = table.Column<string>(type: "TEXT", nullable: true),
+                    Trigger = table.Column<int>(type: "INTEGER", nullable: false),
+                    ArchivosCopiados = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -128,20 +124,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "StorageProviders",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false),
-                    ConfigJsonSchema = table.Column<string>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StorageProviders", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -153,21 +135,6 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserStorages",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IdUser = table.Column<int>(type: "INTEGER", nullable: false),
-                    CredentialJson = table.Column<string>(type: "TEXT", nullable: true),
-                    CloudDestination = table.Column<string>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserStorages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -310,7 +277,7 @@ namespace Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "FileMetadatas");
+                name: "ApplicationSettings");
 
             migrationBuilder.DropTable(
                 name: "HistoryBackupExecutions");
@@ -319,16 +286,10 @@ namespace Infrastructure.Migrations
                 name: "LogAccionesUsuario");
 
             migrationBuilder.DropTable(
-                name: "StorageProviders");
-
-            migrationBuilder.DropTable(
                 name: "Trabajos");
 
             migrationBuilder.DropTable(
                 name: "Users");
-
-            migrationBuilder.DropTable(
-                name: "UserStorages");
 
             migrationBuilder.DropTable(
                 name: "TrabajosOrigenDestinos");

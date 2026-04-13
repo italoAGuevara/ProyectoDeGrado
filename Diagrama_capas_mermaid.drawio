@@ -1,0 +1,279 @@
+<mxfile host="65bd71144e">
+    <diagram id="diagram-capas" name="Diagrama capas">
+        <mxGraphModel dx="1113" dy="657" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="950" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="reg_ui" value="Capa_UI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;dashPattern=8 8;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;fontStyle=1;fontFamily=Helvetica;fontSize=12" parent="1" vertex="1">
+                    <mxGeometry x="10" y="10" width="1680" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="reg_svc" value="Capa_Servicio" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;dashPattern=8 8;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;fontStyle=1;fontFamily=Helvetica;fontSize=12" parent="1" vertex="1">
+                    <mxGeometry x="10" y="320" width="1680" height="420" as="geometry"/>
+                </mxCell>
+                <mxCell id="reg_hs" value="Capa_HostedService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;dashPattern=8 8;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;fontStyle=1;fontFamily=Helvetica;fontSize=12" parent="1" vertex="1">
+                    <mxGeometry x="10" y="750" width="1680" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="LC" value="LoginComponent" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="50" y="70" width="150" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="JC" value="JobsComponent" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="220" y="70" width="150" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="JWC" value="JobWizardComponent" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="390" y="70" width="160" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="DC" value="DestinationsComponent" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="570" y="70" width="180" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="SC" value="ScriptsComponent" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="770" y="70" width="150" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="SETC" value="SettingsComponent" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="940" y="70" width="160" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="JRC" value="JobReportComponent" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="1120" y="70" width="170" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="AG" value="AuthGuard" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="1310" y="70" width="120" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="AS" value="AuthService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="50" y="200" width="130" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="JS" value="JobsService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="200" y="200" width="130" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="DS" value="DestinationsService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="350" y="200" width="170" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="OS" target="DS">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="OS" value="OriginsService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="540" y="200" width="140" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="SS2" value="ScriptsService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="700" y="200" width="140" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="SETS" value="SettingsService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="860" y="200" width="150" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="JERS" value="JobExecutionsReportService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="1030" y="200" width="200" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="HC" value="HttpClient" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="780" y="380" width="120" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="AE" value="AuthEndpoint" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="40" y="480" width="130" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="TE" value="TrabajoEndpoint" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="190" y="480" width="140" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="OE" value="OrigenEndpoint" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="350" y="480" width="130" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="DE" value="DestinoEndpoint" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="500" y="480" width="140" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="SE" value="ScriptEndpoint" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="660" y="480" width="130" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="RE" value="ReportesEndpoint" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="810" y="480" width="140" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="SE2" value="SettingsEndpoint" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="970" y="480" width="150" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="LAE" value="LogAccionesUsuarioEndpoint" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="1140" y="480" width="200" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="ITEJS" value="ITrabajoEjecucionService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="40" y="580" width="200" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="ITCTH" value="ITrabajoCronTickHandler" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="260" y="580" width="200" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="ICMET" value="ICronMinutoEjecucionTracker" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="480" y="580" width="220" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="IDTCC" value="IDestinoToCloudCopier" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="720" y="580" width="200" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="ISR" value="IScriptRunner" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="940" y="580" width="130" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="IDCP" value="IDestinoCredentialProtector" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="1090" y="580" width="230" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="TEJS" value="TrabajoEjecucionService" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="200" y="670" width="200" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="ADC" value="AppDbContext" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="440" y="670" width="130" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="R" value="Robot" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="200" y="820" width="100" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="TCTH" value="TrabajoCronTickHandler" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="360" y="820" width="200" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="DTCC" value="DestinoToCloudCopier" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="600" y="820" width="200" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="SR" value="ScriptRunner" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#000000;fillColor=none;fontFamily=Helvetica;fontSize=11" parent="1" vertex="1">
+                    <mxGeometry x="840" y="820" width="130" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="e0_LC_AS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="LC" target="AS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1_JC_JS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="JC" target="JS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2_JWC_JS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="JWC" target="JS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3_JWC_OS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11;curved=1;" parent="1" source="JWC" target="OS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e4_JWC_DS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11;curved=1;" parent="1" source="JWC" target="DS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e5_JWC_SS2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="JWC" target="SS2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e6_DC_DS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="DC" target="DS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e7_SC_SS2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="SC" target="SS2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e8_SETC_SETS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="SETC" target="SETS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e9_JRC_JERS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="JRC" target="JERS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e10_AG_AS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="AG" target="AS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e11_AS_HC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="AS" target="HC" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="115" y="300"/>
+                            <mxPoint x="840" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e12_JS_HC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="JS" target="HC" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="265" y="300"/>
+                            <mxPoint x="840" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e13_DS_HC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="DS" target="HC" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="435" y="300"/>
+                            <mxPoint x="840" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e14_OS_HC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="OS" target="HC" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="610" y="300"/>
+                            <mxPoint x="840" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e15_SS2_HC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="SS2" target="HC" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="770" y="300"/>
+                            <mxPoint x="840" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e16_SETS_HC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="SETS" target="HC" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="935" y="300"/>
+                            <mxPoint x="840" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e17_JERS_HC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="JERS" target="HC" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1130" y="300"/>
+                            <mxPoint x="840" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e18_HC_AE" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="HC" target="AE" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e19_HC_TE" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="HC" target="TE" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e20_HC_OE" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="HC" target="OE" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e21_HC_DE" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="HC" target="DE" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e22_HC_SE" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="HC" target="SE" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e23_HC_RE" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="HC" target="RE" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e24_HC_SE2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="HC" target="SE2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e25_HC_LAE" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="HC" target="LAE" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e26_R_ITCTH" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="R" target="ITCTH" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e27_TCTH_ITCTH" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TCTH" target="ITCTH" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e28_TCTH_ADC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TCTH" target="ADC" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e29_TCTH_ITEJS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TCTH" target="ITEJS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e30_TCTH_ICMET" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TCTH" target="ICMET" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e31_TEJS_ITEJS" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TEJS" target="ITEJS" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e32_TEJS_ADC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TEJS" target="ADC" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e33_TEJS_IDTCC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TEJS" target="IDTCC" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e34_TEJS_ISR" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TEJS" target="ISR" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e35_TEJS_IDCP" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="TEJS" target="IDCP" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e36_DTCC_IDTCC" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="DTCC" target="IDTCC" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e37_SR_ISR" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#000000;fontFamily=Helvetica;fontSize=11" parent="1" source="SR" target="ISR" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
