@@ -139,7 +139,8 @@ public sealed class ScriptRunner : IScriptRunner
         if (File.Exists(bundled))
             return bundled;
 
-        return "node";
+        throw new Exception(
+            "No se encontró un ejecutable de Node.js. Coloca el binario en «runtime/node/» junto a la API, define ScriptRunner:NodeExecutablePath en appsettings, o instala Node en el PATH.");
     }
 
     private string DescribirFalloAlIniciarProceso(string tipo)
