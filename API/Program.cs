@@ -113,10 +113,9 @@ var angularBrowserConfigured = app.Configuration["Spa:BrowserPath"]?.Trim();
 if (string.IsNullOrEmpty(angularBrowserConfigured))
     throw new InvalidOperationException("Configure 'Spa:BrowserPath' in appsettings.json (absolute path or relative to the API content root).");
 
-var angularPath = Path.GetFullPath(
-    Path.IsPathRooted(angularBrowserConfigured)
-        ? angularBrowserConfigured
-        : Path.Combine(app.Environment.ContentRootPath, angularBrowserConfigured));
+var angularPath = Path.IsPathRooted(angularBrowserConfigured)
+    ? angularBrowserConfigured
+    : Path.Combine(app.Environment.ContentRootPath, angularBrowserConfigured);
 
 // Asegurar usuario único y datos de ejemplo (orígenes, scripts, jobs)
 using (var scope = app.Services.CreateScope())
