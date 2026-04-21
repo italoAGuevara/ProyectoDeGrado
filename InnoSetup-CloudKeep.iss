@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only
 
-#define MyAppName "CloudKepp"
+#define MyAppName "CloudKeep"
 #define MyAppVersion "1.0"
 #define MyAppPublisher "Italo Guevara"
 #define MyAppExeName "CloudKeep.exe"
