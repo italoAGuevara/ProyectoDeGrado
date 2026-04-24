@@ -129,6 +129,83 @@
     </div>
   </div>
 
+  <div class="app-card card border-0 overflow-hidden mb-4">
+    <div class="card-header bg-transparent border-0 border-bottom py-3 px-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <h5 class="mb-0 fw-600">Registro de acciones de usuario</h5>
+        <p class="small text-muted mb-0 mt-1">
+          Auditoría de cambios (tabla <code class="small">LogAccionesUsuario</code>): creación, edición o eliminación en orígenes, destinos, scripts y trabajos.
+        </p>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="logAccionesLoading()" (click)="cargarLogAccionesUsuario()">
+        Actualizar
+      </button>
+    </div>
+    <div class="card-body p-0">
+      @if (logAccionesLoading()) {
+        <p class="text-muted small py-4 px-4 mb-0">Cargando registro de acciones…</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-modern table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Fecha (local)</th>
+                <th>Tabla</th>
+                <th>Acción</th>
+                <th>Valor anterior</th>
+                <th>Valor nuevo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of logAcciones(); track row.id) {
+                <tr>
+                  <td class="small text-nowrap">{{ row.fechaAccion | date: 'short' }}</td>
+                  <td><span class="badge bg-light text-dark">{{ row.tablaAfectada }}</span></td>
+                  <td><span class="badge bg-secondary">{{ row.accion }}</span></td>
+                  <td class="small text-muted font-monospace log-json-cell">
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm p-0 mb-1 text-decoration-none"
+                      (click)="toggleJsonCell(row.id, 'anterior')">
+                      {{ isJsonCellExpanded(row.id, 'anterior') ? 'Ocultar' : 'Expandir' }}
+                    </button>
+                    @if (isJsonCellExpanded(row.id, 'anterior')) {
+                      <pre class="json-viewer mb-0">{{ formatJsonForView(row.valorAnterior) }}</pre>
+                    } @else {
+                      <span [title]="row.valorAnterior">{{ truncarTexto(row.valorAnterior, 48) }}</span>
+                    }
+                  </td>
+                  <td class="small text-muted font-monospace log-json-cell">
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm p-0 mb-1 text-decoration-none"
+                      (click)="toggleJsonCell(row.id, 'nuevo')">
+                      {{ isJsonCellExpanded(row.id, 'nuevo') ? 'Ocultar' : 'Expandir' }}
+                    </button>
+                    @if (isJsonCellExpanded(row.id, 'nuevo')) {
+                      <pre class="json-viewer mb-0">{{ formatJsonForView(row.valorNuevo) }}</pre>
+                    } @else {
+                      <span [title]="row.valorNuevo">{{ truncarTexto(row.valorNuevo, 48) }}</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">No hay acciones registradas todavía.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (logAcciones().length > 0) {
+          <p class="small text-muted px-4 py-3 border-top mb-0">
+            Mostrando hasta {{ logAcciones().length }} registro(s) recientes (límite {{ logAccionesLimite }}).
+          </p>
+        }
+      }
+    </div>
+  </div>
+
   <div class="app-card card border-0 overflow-hidden">
     <div class="card-header bg-transparent border-0 border-bottom py-3 px-4">
       <h5 class="mb-0 fw-600">Catálogo de trabajos</h5>

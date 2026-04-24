@@ -10,6 +10,10 @@ import {
 import { ScriptsService } from '../../../services/scripts.service';
 import { DestinationsService } from '../../../services/destinations.service';
 import { ReportBreadcrumbComponent, BreadcrumbItem } from '../../../layout/report-breadcrumb/report-breadcrumb.component';
+import {
+  LogAccionUsuarioItem,
+  LogAccionesUsuarioService,
+} from '../../../services/log-acciones-usuario.service';
 
 @Component({
   selector: 'app-job-report',
@@ -23,6 +27,7 @@ export class JobReportComponent implements OnInit {
   private executionsReport = inject(JobExecutionsReportService);
   private scriptsService = inject(ScriptsService);
   private destinationsService = inject(DestinationsService);
+  private logAccionesUsuario = inject(LogAccionesUsuarioService);
 
   breadcrumbItems: BreadcrumbItem[] = [{ label: 'Reporte de trabajos' }];
   jobs = this.jobsService.jobs;
@@ -35,11 +40,32 @@ export class JobReportComponent implements OnInit {
   /** Filtro por trabajo: '' = todos */
   filtroTrabajoId: number | '' = '';
 
+  logAcciones = signal<LogAccionUsuarioItem[]>([]);
+  logAccionesLoading = signal(false);
+  private expandedJsonCells = signal<Set<string>>(new Set());
+  /** Máximo permitido por el backend en una sola consulta. */
+  readonly logAccionesLimite = 2000;
+
   ngOnInit(): void {
     this.jobsService.loadAll();
     this.scriptsService.loadAll();
     this.destinationsService.loadAll();
     this.cargarHistorialEjecuciones();
+    this.cargarLogAccionesUsuario();
+  }
+
+  cargarLogAccionesUsuario(): void {
+    this.logAccionesLoading.set(true);
+    this.logAccionesUsuario.listar(this.logAccionesLimite).subscribe({
+      next: (rows) => {
+        this.logAcciones.set(rows);
+        this.logAccionesLoading.set(false);
+      },
+      error: () => {
+        this.logAcciones.set([]);
+        this.logAccionesLoading.set(false);
+      },
+    });
   }
 
   cargarHistorialEjecuciones(): void {
@@ -129,6 +155,34 @@ export class JobReportComponent implements OnInit {
   truncarTexto(s: string | null, max: number): string {
     if (!s) return '—';
     return s.length <= max ? s : s.slice(0, max) + '…';
+  }
+
+  jsonCellKey(rowId: string, field: 'anterior' | 'nuevo'): string {
+    return `${rowId}:${field}`;
+  }
+
+  isJsonCellExpanded(rowId: string, field: 'anterior' | 'nuevo'): boolean {
+    return this.expandedJsonCells().has(this.jsonCellKey(rowId, field));
+  }
+
+  toggleJsonCell(rowId: string, field: 'anterior' | 'nuevo'): void {
+    const key = this.jsonCellKey(rowId, field);
+    this.expandedJsonCells.update((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  formatJsonForView(value: string | null): string {
+    if (!value) return '—';
+    try {
+      const parsed = JSON.parse(value);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return value;
+    }
   }
 
   destinationLabel(job: Job): string {

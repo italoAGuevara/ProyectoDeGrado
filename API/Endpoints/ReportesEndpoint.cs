@@ -1,3 +1,4 @@
+using API.DTOs;
 using API.Services.Interfaces;
 
 namespace API.Endpoints;
@@ -10,6 +11,18 @@ public static class ReportesEndpoint
 
         group.MapGet("/ejecuciones", GetEjecucionesHistorial)
             .WithName("GetEjecucionesHistorial");
+
+        group.MapGet("/log-acciones-usuario", GetLogAccionesUsuario)
+            .WithName("GetReporteLogAccionesUsuario");
+    }
+
+    private static async Task<IResult> GetLogAccionesUsuario(
+        ILogAccionesUsuarioQueryService logAcciones,
+        int? limite,
+        CancellationToken cancellationToken)
+    {
+        var list = await logAcciones.ListarAsync(limite, cancellationToken);
+        return Results.Ok(new LogAccionesUsuarioListResponse(list));
     }
 
     private static async Task<IResult> GetEjecucionesHistorial(

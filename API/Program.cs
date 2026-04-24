@@ -95,8 +95,10 @@ builder.Services.AddCors(options =>
       builder.SetIsOriginAllowed(origin =>
       {
           var uri = new Uri(origin);
+          // Uri.Host no incluye el puerto; localhost:4200 nunca coincidía como host.
           return uri.Host == "localhost" ||
-                  uri.Host == "localhost:4200";
+                 uri.Host == "127.0.0.1" ||
+                 uri.Host == "::1";
       })
     .AllowAnyMethod()
     .AllowAnyHeader());
@@ -128,9 +130,9 @@ var angularBrowserConfigured = app.Configuration["Spa:BrowserPath"]?.Trim();
 if (string.IsNullOrEmpty(angularBrowserConfigured))
     throw new InvalidOperationException("Configure 'Spa:BrowserPath' in appsettings.json (absolute path or relative to the API content root).");
 
-var angularPath = Path.IsPathRooted(angularBrowserConfigured)
-    ? angularBrowserConfigured
-    : Path.Combine(app.Environment.ContentRootPath, angularBrowserConfigured);
+    var angularPath = "C:\\Users\\italo\\Documents\\ProyectoDeGrado\\UI\\dist\\ProyectoDeGradoUI\\browser";//Path.IsPathRooted(angularBrowserConfigured)
+//    ? angularBrowserConfigured
+//    : Path.Combine(app.Environment.ContentRootPath, angularBrowserConfigured);
 
 // Asegurar usuario único y datos de ejemplo (orígenes, scripts, jobs)
 using (var scope = app.Services.CreateScope())
@@ -174,7 +176,6 @@ app.MapScripts();
 app.MapOrigenes();
 app.MapDestinos();
 app.MapTrabajos();
-app.MapLogAccionesUsuario();
 
 // RETURN index.html for any non-API route to allow Angular routing to work
 app.MapFallbackToFile("index.html", new StaticFileOptions

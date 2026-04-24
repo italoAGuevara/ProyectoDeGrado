@@ -1,1 +1,19 @@
 /* Estilos del reporte de trabajos */
+
+.log-json-cell {
+  min-width: 18rem;
+  vertical-align: top;
+}
+
+.json-viewer {
+  max-height: 16rem;
+  overflow: auto;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
